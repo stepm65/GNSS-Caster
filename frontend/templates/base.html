@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="csp-nonce" content="{{ csp_nonce() }}">
+  <meta name="color-scheme" content="light dark">
+  <title>GNSS Caster</title>
+  <link rel="icon" href="data:,">
+  <style nonce="{{ csp_nonce() }}">body{margin:0;background:#f5f7f6;font-family:"Segoe UI",sans-serif}.boot{padding:32px;color:#52665b}html[data-theme="dark"] body{background:#111b1a}html[data-theme="dark"] .boot{color:#a1b4ad}</style>
+  <script nonce="{{ csp_nonce() }}">try{document.documentElement.dataset.theme=localStorage.getItem('gnss_theme')==='dark'?'dark':'light'}catch(e){}</script>
+</head>
+<body>
+  <div id="root"><p class="boot" role="status">Loading GNSS Caster…</p></div>
+  <noscript>Enable JavaScript to use the GNSS Caster web interface.</noscript>
+  <script id="gnss-bootstrap" type="application/json" nonce="{{ csp_nonce() }}">{{ {
+    'username': current_user.username if current_user.is_authenticated else '',
+    'userId': current_user.id if current_user.is_authenticated else none,
+    'role': current_user.role if current_user.is_authenticated else 'viewer',
+    'mustChangePassword': current_user.must_change_password if current_user.is_authenticated else false,
+    'version': caster_version,
+    'error': error|default(none),
+    'errorPage': error_page|default(false),
+    'showPasswordNotice': show_password_notice|default(false),
+    'messages': get_flashed_messages(with_categories=true)
+  }|tojson }}</script>
+  <script type="module" nonce="{{ csp_nonce() }}" src="/static/ui/__ENTRY__"></script>
+</body>
+</html>
