@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import React, { useContext, useState } from "react";
 import {
   Alert,
@@ -30,26 +31,29 @@ import {
   Status,
   date,
 } from "../components";
-
 export default function Security() {
   const { isAdmin } = useContext(Session),
     [tab, setTab] = useState(0);
   return (
     <>
       <PageTitle
-        title="Account & access"
-        eyebrow="MANAGEMENT"
-        description="Protect your account and manage access to this caster."
+        title={t("Account & access")}
+        eyebrow={t("MANAGEMENT")}
+        description={t(
+          "Protect your account and manage access to this caster.",
+        )}
       />
       <Tabs
         value={tab}
         onChange={(_, v) => setTab(v)}
-        sx={{ mb: 3 }}
+        sx={{
+          mb: 3,
+        }}
         variant="scrollable"
       >
-        <Tab label="My account" />
-        {isAdmin && <Tab label="User accounts" />}
-        {isAdmin && <Tab label="API tokens" />}
+        <Tab label={t("My account")} />
+        {isAdmin && <Tab label={t("User accounts")} />}
+        {isAdmin && <Tab label={t("API tokens")} />}
       </Tabs>
       {tab === 0 && <Account />}
       {isAdmin && tab === 1 && <Accounts />}
@@ -75,8 +79,8 @@ function Account() {
       <Notice value={action.notice} />
       <GridBox>
         <Panel
-          title="Change password"
-          caption={`Signed in as ${session.username}`}
+          title={t("Change password")}
+          caption={t("Signed in as {0}", [session.username])}
         >
           <Box
             component="form"
@@ -113,7 +117,7 @@ function Account() {
                   type: "password",
                   required: true,
                   wide: true,
-                  help: "Use a strong, unique password.",
+                  help: t("Use a strong, unique password."),
                 },
                 {
                   key: "confirm_password",
@@ -130,22 +134,33 @@ function Account() {
               type="submit"
               variant="contained"
               disabled={action.busy}
-              sx={{ mt: 3 }}
+              sx={{
+                mt: 3,
+              }}
             >
-              Update password
+              {t("Update password")}
             </Button>
           </Box>
         </Panel>
         <Panel
-          title="Two-factor authentication"
-          caption="An authenticator code adds a second step when you sign in."
+          title={t("Two-factor authentication")}
+          caption={t(
+            "An authenticator code adds a second step when you sign in.",
+          )}
         >
           <ResourceState resource={status} />
           <Status value={status.data?.enabled ? "enabled" : "disabled"} />
-          <Typography sx={{ my: 2 }} color="text.secondary">
+          <Typography
+            sx={{
+              my: 2,
+            }}
+            color="text.secondary"
+          >
             {status.data?.enabled
-              ? `${status.data.backup_codes_remaining} backup codes remaining.`
-              : "Set up an authenticator app to protect your account."}
+              ? t("{0} backup codes remaining.", [
+                  status.data.backup_codes_remaining,
+                ])
+              : t("Set up an authenticator app to protect your account.")}
           </Typography>
           {status.data?.enabled ? (
             <Button
@@ -153,7 +168,7 @@ function Account() {
               variant="outlined"
               onClick={() => setDisable(true)}
             >
-              Disable two-factor authentication
+              {t("Disable two-factor authentication")}
             </Button>
           ) : (
             <Button
@@ -161,12 +176,15 @@ function Account() {
               disabled={action.busy || !status.data}
               onClick={() =>
                 action.run(
-                  () => api("/api/2fa/setup", { method: "POST" }),
+                  () =>
+                    api("/api/2fa/setup", {
+                      method: "POST",
+                    }),
                   setSetup,
                 )
               }
             >
-              Set up two-factor authentication
+              {t("Set up two-factor authentication")}
             </Button>
           )}
         </Panel>
@@ -181,12 +199,13 @@ function Account() {
             setCode("");
           }}
         >
-          <DialogTitle>Set up your authenticator</DialogTitle>
+          <DialogTitle>{t("Set up your authenticator")}</DialogTitle>
           <DialogContent>
             <Notice value={action.notice} />
             <Typography>
-              Scan the QR code in your authenticator app, or enter the setup key
-              manually.
+              {t(
+                "Scan the QR code in your authenticator app, or enter the setup key manually.",
+              )}
             </Typography>
             {setup.qr_data_uri?.startsWith("data:image/png;base64,") && (
               <Box
@@ -204,18 +223,29 @@ function Account() {
             )}
             <TextField
               fullWidth
-              label="Setup key"
+              label={t("Setup key")}
               value={setup.secret || ""}
-              slotProps={{ input: { readOnly: true } }}
-              sx={{ my: 2 }}
+              slotProps={{
+                input: {
+                  readOnly: true,
+                },
+              }}
+              sx={{
+                my: 2,
+              }}
             />
             <TextField
               fullWidth
               autoComplete="one-time-code"
-              label="Six-digit code"
+              label={t("Six-digit code")}
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              slotProps={{ htmlInput: { inputMode: "numeric", maxLength: 6 } }}
+              slotProps={{
+                htmlInput: {
+                  inputMode: "numeric",
+                  maxLength: 6,
+                },
+              }}
             />
           </DialogContent>
           <DialogActions>
@@ -226,7 +256,7 @@ function Account() {
                 setCode("");
               }}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               variant="contained"
@@ -234,7 +264,12 @@ function Account() {
               onClick={() =>
                 action.run(
                   () =>
-                    api("/api/2fa/enable", { method: "POST", body: { code } }),
+                    api("/api/2fa/enable", {
+                      method: "POST",
+                      body: {
+                        code,
+                      },
+                    }),
                   (result) => {
                     setCodes(result.backup_codes);
                     setSetup(null);
@@ -244,25 +279,25 @@ function Account() {
                 )
               }
             >
-              Enable
+              {t("Enable")}
             </Button>
           </DialogActions>
         </Dialog>
       )}
       {disable && (
         <FormDialog
-          title="Disable two-factor authentication"
+          title={t("Disable two-factor authentication")}
           schema={[
             {
               key: "password",
-              label: "Current password",
+              label: t("Current password"),
               type: "password",
               required: true,
               wide: true,
             },
           ]}
           initial={{}}
-          submitLabel="Disable two-factor authentication"
+          submitLabel={t("Disable two-factor authentication")}
           onClose={() => setDisable(false)}
           onSubmit={async (v) => {
             const result = await api("/api/2fa/disable", {
@@ -276,8 +311,10 @@ function Account() {
       )}
       {codes && (
         <SecretDialog
-          title="Save your backup codes"
-          description="Each code can be used once if you lose access to your authenticator. Store them somewhere safe. They will not be shown again."
+          title={t("Save your backup codes")}
+          description={t(
+            "Each code can be used once if you lose access to your authenticator. Store them somewhere safe. They will not be shown again.",
+          )}
           value={codes.join("\n")}
           onClose={() => setCodes(null)}
         />
@@ -291,30 +328,50 @@ function Accounts() {
     [editor, setEditor] = useState(null),
     [reset, setReset] = useState(null);
   const fields = [
-    { key: "username", required: true },
-    { key: "email", type: "email" },
+    {
+      key: "username",
+      required: true,
+    },
+    {
+      key: "email",
+      type: "email",
+    },
     {
       key: "role",
       options: ["viewer", "operator", "admin"],
       disabled: editor?.is_builtin,
-      help: "Viewer: read-only. Operator: stations and backups. Admin: system and user access.",
+      help: t(
+        "Viewer: read-only. Operator: stations and backups. Admin: system and user access.",
+      ),
     },
     ...(!editor?.id
       ? [
-          { key: "password", type: "password", required: true },
-          { key: "confirm_password", type: "password", required: true },
+          {
+            key: "password",
+            type: "password",
+            required: true,
+          },
+          {
+            key: "confirm_password",
+            type: "password",
+            required: true,
+          },
         ]
       : []),
   ];
   return (
     <Panel
-      title="User accounts"
+      title={t("User accounts")}
       action={
         <Button
           variant="contained"
-          onClick={() => setEditor({ role: "operator" })}
+          onClick={() =>
+            setEditor({
+              role: "operator",
+            })
+          }
         >
-          Add user
+          {t("Add user")}
         </Button>
       }
     >
@@ -322,13 +379,23 @@ function Accounts() {
       <DataTable
         rows={resource.data || []}
         columns={[
-          { key: "username" },
-          { key: "role", render: (r) => <Status value={r.role} /> },
-          { key: "email" },
-          { key: "last_login", render: (r) => date(r.last_login) },
+          {
+            key: "username",
+          },
+          {
+            key: "role",
+            render: (r) => <Status value={r.role} />,
+          },
+          {
+            key: "email",
+          },
+          {
+            key: "last_login",
+            render: (r) => date(r.last_login),
+          },
           {
             key: "locked_until",
-            label: "Lock status",
+            label: t("Lock status"),
             render: (r) =>
               r.locked_until > Date.now() / 1000
                 ? `Locked until ${date(r.locked_until)}`
@@ -338,17 +405,17 @@ function Accounts() {
         actions={(r) => (
           <>
             <Button size="small" onClick={() => setEditor(r)}>
-              Edit
+              {t("Edit")}
             </Button>
             <Button size="small" onClick={() => setReset(r)}>
-              Reset password
+              {t("Reset password")}
             </Button>
           </>
         )}
       />
       {editor && (
         <FormDialog
-          title={editor.id ? "Edit user" : "Add user"}
+          title={editor.id ? t("Edit user") : t("Add user")}
           schema={fields}
           initial={editor}
           onClose={() => setEditor(null)}
@@ -359,11 +426,18 @@ function Accounts() {
               username: value.username,
               email: value.email || "",
               role: value.role,
-              ...(!value.id ? { password: value.password } : {}),
+              ...(!value.id
+                ? {
+                    password: value.password,
+                  }
+                : {}),
             };
             const r = await api(
               `/api/admins/${value.id ? value.id + "/update" : "create"}`,
-              { method: value.id ? "PUT" : "POST", body: payload },
+              {
+                method: value.id ? "PUT" : "POST",
+                body: payload,
+              },
             );
             resource.refresh();
             if (value.id === session.userId) window.location.reload();
@@ -373,15 +447,19 @@ function Accounts() {
       )}
       {reset && (
         <FormDialog
-          title={`Reset password for ${reset.username}`}
+          title={t("Reset password for {0}", [reset.username])}
           schema={[
             {
               key: "password",
-              label: "New password",
+              label: t("New password"),
               type: "password",
               required: true,
             },
-            { key: "confirm_password", type: "password", required: true },
+            {
+              key: "confirm_password",
+              type: "password",
+              required: true,
+            },
           ]}
           initial={{}}
           onClose={() => setReset(null)}
@@ -396,9 +474,15 @@ function Accounts() {
             return r;
           }}
         >
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            This changes the user's password and invalidates their other
-            sessions.
+          <Alert
+            severity="warning"
+            sx={{
+              mb: 3,
+            }}
+          >
+            {t(
+              "This changes the user's password and invalidates their other sessions.",
+            )}
           </Alert>
         </FormDialog>
       )}
@@ -413,11 +497,13 @@ function Tokens() {
     action = useAction();
   return (
     <Panel
-      title="API tokens"
-      caption="Tokens grant programmatic access. The full token is shown only once."
+      title={t("API tokens")}
+      caption={t(
+        "Tokens grant programmatic access. The full token is shown only once.",
+      )}
       action={
         <Button variant="contained" onClick={() => setCreate(true)}>
-          Create token
+          {t("Create token")}
         </Button>
       }
     >
@@ -426,67 +512,101 @@ function Tokens() {
       <DataTable
         rows={resource.data || []}
         columns={[
-          { key: "name" },
-          { key: "token_prefix", label: "Prefix" },
-          { key: "scope" },
+          {
+            key: "name",
+          },
+          {
+            key: "token_prefix",
+            label: t("Prefix"),
+          },
+          {
+            key: "scope",
+          },
           {
             key: "is_active",
-            label: "Status",
-            render: (t) => (
+            label: t("Status"),
+            render: (token) => (
               <Status
                 value={
-                  t.expired ? "expired" : t.is_active ? "enabled" : "disabled"
+                  token.expired
+                    ? "expired"
+                    : token.is_active
+                      ? "enabled"
+                      : "disabled"
                 }
               />
             ),
           },
           {
             key: "expires",
-            render: (t) => (t.expires ? date(t.expires) : "Never"),
+            render: (token) =>
+              token.expires ? date(token.expires) : t("Never"),
           },
-          { key: "last_used", render: (t) => date(t.last_used) },
+          {
+            key: "last_used",
+            render: (token) => date(token.last_used),
+          },
         ]}
-        actions={(t) => (
+        actions={(token) => (
           <>
             <Button
               size="small"
               disabled={action.busy}
               onClick={() =>
                 action.run(
-                  () => api(`/api/tokens/${t.id}/toggle`, { method: "POST" }),
+                  () =>
+                    api(`/api/tokens/${token.id}/toggle`, {
+                      method: "POST",
+                    }),
                   resource.refresh,
                 )
               }
             >
-              {t.is_active ? "Disable" : "Enable"}
+              {token.is_active ? t("Disable") : t("Enable")}
             </Button>
-            <Button size="small" color="error" onClick={() => setConfirm(t)}>
-              Revoke
+            <Button
+              size="small"
+              color="error"
+              onClick={() => setConfirm(token)}
+            >
+              {t("Revoke")}
             </Button>
           </>
         )}
       />
       {create && (
         <FormDialog
-          title="Create API token"
+          title={t("Create API token")}
           schema={[
-            { key: "name", required: true },
+            {
+              key: "name",
+              required: true,
+            },
             {
               key: "scope",
               options: [
-                { value: "read", label: "Read only" },
-                { value: "full", label: "Full access" },
+                {
+                  value: "read",
+                  label: t("Read only"),
+                },
+                {
+                  value: "full",
+                  label: t("Full access"),
+                },
               ],
             },
             {
               key: "expires_days",
-              label: "Expires after (days)",
+              label: t("Expires after (days)"),
               type: "number",
               min: 0,
-              help: "0 means no expiration.",
+              help: t("0 means no expiration."),
             },
           ]}
-          initial={{ scope: "read", expires_days: 30 }}
+          initial={{
+            scope: "read",
+            expires_days: 30,
+          }}
           onClose={() => setCreate(false)}
           onSubmit={async (v) => {
             const r = await api("/api/tokens/create", {
@@ -501,16 +621,18 @@ function Tokens() {
       )}
       {secret && (
         <SecretDialog
-          title="Copy your API token"
-          description="Save this token now. It will not be shown again."
+          title={t("Copy your API token")}
+          description={t("Save this token now. It will not be shown again.")}
           value={secret}
           onClose={() => setSecret(null)}
         />
       )}
       {confirm && (
         <Confirm
-          title={`Revoke ${confirm.name}?`}
-          description="Applications using this token will lose access immediately."
+          title={t("Revoke {0}?", [confirm.name])}
+          description={t(
+            "Applications using this token will lose access immediately.",
+          )}
           onClose={() => setConfirm(null)}
           onConfirm={async () => {
             const r = await api(`/api/tokens/${confirm.id}/delete`, {
@@ -528,17 +650,26 @@ function SecretDialog({ title, description, value, onClose }) {
   const [copied, setCopied] = useState(false);
   return (
     <Dialog open fullWidth maxWidth="sm" onClose={onClose}>
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle>{t(title)}</DialogTitle>
       <DialogContent>
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          {description}
+        <Alert
+          severity="warning"
+          sx={{
+            mb: 3,
+          }}
+        >
+          {t(description)}
         </Alert>
         <TextField
           fullWidth
           multiline
-          label="One-time secret"
+          label={t("One-time secret")}
           value={value}
-          slotProps={{ input: { readOnly: true } }}
+          slotProps={{
+            input: {
+              readOnly: true,
+            },
+          }}
         />
       </DialogContent>
       <DialogActions>
@@ -552,10 +683,10 @@ function SecretDialog({ title, description, value, onClose }) {
             }
           }}
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("Copied") : t("Copy")}
         </Button>
         <Button variant="contained" onClick={onClose}>
-          I have saved it
+          {t("I have saved it")}
         </Button>
       </DialogActions>
     </Dialog>

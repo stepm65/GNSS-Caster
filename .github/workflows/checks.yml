@@ -25,7 +25,7 @@ jobs:
       - name: Install test dependencies
         run: python -m pip install -r requirements-dev.txt
       - name: Check installer syntax
-        run: bash -n gnss-caster-install-3.0.1.sh
+        run: bash -n gnss-caster-install.sh
       - name: Run backend and installer regressions
         run: python -m unittest discover -s tests -v
 

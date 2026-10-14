@@ -59,6 +59,7 @@ export const settings = {
   telegram_chat_id: setting("-10012345678"),
   telegram_admin_id: setting("12345678"),
   telegram_enabled: setting(true),
+  telegram_language: setting("en"),
   telegram_commands_enabled: setting(false),
   telegram_send_backup: setting(true),
   notify_station_up: setting(true),

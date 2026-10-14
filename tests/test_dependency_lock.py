@@ -12,7 +12,7 @@ spec.loader.exec_module(builder)
 class DependencyLockTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source=(ROOT/'gnss-caster-install-3.0.1.sh').read_text(encoding='utf-8')
+        cls.source=(ROOT/'gnss-caster-install.sh').read_text(encoding='utf-8')
         cls.lock=cls.source.split("cat > $BASE/requirements.txt << 'EOF'\n",1)[1].split('\nEOF',1)[0]
         cls.metadata=json.loads((ROOT/'tests/dependency_metadata.json').read_text())
         logical=cls.lock.replace('\\\n',' ')

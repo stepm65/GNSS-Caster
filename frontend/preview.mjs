@@ -58,7 +58,7 @@ createServer(async (req, res) => {
     username: "admin",
     userId: 1,
     role: url.searchParams.get("role") || "admin",
-    version: "3.1.0",
+    version: "3.2.0",
     preview: true,
     messages: [],
     error: null,

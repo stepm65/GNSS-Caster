@@ -1,7 +1,7 @@
 # GNSS Caster web interface
 
-English React 19 + Material UI 7 cabinet, served by the existing Flask app.
-Production assets are embedded in `gnss-caster-install-3.0.1.sh`. Raspberry Pi
+English/Russian React 19 + Material UI 7 cabinet, served by the existing Flask app.
+Production assets are embedded in `gnss-caster-install.sh`. Raspberry Pi
 does not need Node.js, pnpm, a build step, or access to a CDN.
 
 ## Build and package
@@ -50,6 +50,25 @@ Installer/Jinja integration tests require the same Jinja version as production:
 python -m pip install Jinja2==3.1.6
 python -m unittest discover -s tests -p test_frontend_bundle.py
 ```
+
+## Languages
+
+The header and sign-in screens provide a language selector. The browser stores
+only the language preference in `gnss_language`; English is the default.
+Switching language updates labels and Material UI controls without discarding
+form drafts. Date and number formatting uses the selected locale.
+
+English UI messages are the keys in `src/locales/ru.json`; use `t()` from
+`src/i18n.js` and numbered placeholders for dynamic messages. Interpolate user
+values after translation. Do not translate station names, passwords, command
+identifiers or raw receiver output. Translation tests verify explicit keys and
+matching placeholders. Browser tests cover both languages and independent bot
+language saving.
+
+The administrator's **Notifications → Telegram bot language** setting persists
+as `telegram_language` on the server. It controls replies, buttons, notifications
+and backup captions independently of each browser's language. Existing databases
+default to `en`; changing to `ru` requires no service restart.
 
 ## Pages and operations
 

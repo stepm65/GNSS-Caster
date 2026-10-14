@@ -17,7 +17,7 @@ from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = (ROOT / 'gnss-caster-install-3.0.1.sh').read_text(encoding='utf-8')
+SOURCE = (ROOT / 'gnss-caster-install.sh').read_text(encoding='utf-8')
 SQLITE_CODE = SOURCE.split("<< 'PY_SQLITE_TOOL'\n", 1)[1].split('\nPY_SQLITE_TOOL\n', 1)[0]
 
 

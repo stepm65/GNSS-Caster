@@ -1,3 +1,4 @@
+import { t, getLocale, serverMessage } from "../i18n";
 import React, { useContext, useEffect, useState } from "react";
 import {
   Alert,
@@ -40,7 +41,6 @@ import {
   label,
   number,
 } from "../components";
-
 export function Dashboard() {
   const health = useResource("/api/diagnostics", 15000),
     system = useResource("/api/status"),
@@ -52,9 +52,11 @@ export function Dashboard() {
   return (
     <>
       <PageTitle
-        eyebrow="LIVE OPERATIONS"
-        title="Overview"
-        description="Your base stations and field connections, at a glance."
+        eyebrow={t("LIVE OPERATIONS")}
+        title={t("Overview")}
+        description={t(
+          "Your base stations and field connections, at a glance.",
+        )}
         action={
           <Button
             variant="outlined"
@@ -65,7 +67,7 @@ export function Dashboard() {
               ntrip.refresh();
             }}
           >
-            Refresh
+            {t("Refresh")}
           </Button>
         }
       />
@@ -74,27 +76,31 @@ export function Dashboard() {
       <ResourceState resource={ntrip} />
       <GridBox columns={4}>
         <Metric
-          label="Corrections"
+          label={t("Corrections")}
           value={health.error ? "Unknown" : `${good} / ${stations.length}`}
-          caption="Stations with fresh RTCM"
+          caption={t("Stations with fresh RTCM")}
           icon={<Sensors />}
         />
         <Metric
-          label="Base stations"
+          label={t("Base stations")}
           value={stats.base_stations}
-          caption={`${health.error ? "—" : stations.filter((s) => s.receiver === "ok").length} connected`}
+          caption={t("{0} connected", [
+            health.error
+              ? "—"
+              : stations.filter((s) => s.receiver === "ok").length,
+          ])}
           icon={<CellTower />}
         />
         <Metric
-          label="Rovers online"
+          label={t("Rovers online")}
           value={ntrip.error ? "—" : ntrip.data?.connections?.length}
-          caption="Active field connections"
+          caption={t("Active field connections")}
           icon={<Route />}
         />
         <Metric
-          label="Mountpoints"
+          label={t("Mountpoints")}
           value={stats.mountpoints}
-          caption="Configured correction streams"
+          caption={t("Configured correction streams")}
           icon={<HubOutlined />}
         />
       </GridBox>
@@ -111,15 +117,15 @@ export function Dashboard() {
       >
         <Stack spacing={2.5}>
           <Panel
-            title="Base stations"
-            caption="Connection and correction availability"
+            title={t("Base stations")}
+            caption={t("Connection and correction availability")}
             action={
               <Button
                 href="/base_stations"
                 endIcon={<ArrowForward />}
                 size="small"
               >
-                Manage
+                {t("Manage")}
               </Button>
             }
           >
@@ -128,22 +134,27 @@ export function Dashboard() {
               columns={[
                 {
                   key: "name",
-                  label: "Station",
+                  label: t("Station"),
                   render: (s) => (
-                    <Button href={`/base_stations/${s.id}`} sx={{ px: 0 }}>
+                    <Button
+                      href={`/base_stations/${s.id}`}
+                      sx={{
+                        px: 0,
+                      }}
+                    >
                       {s.name}
                     </Button>
                   ),
                 },
                 {
                   key: "receiver",
-                  label: "Receiver",
+                  label: t("Receiver"),
                   render: (s) => (
                     <Status
                       value={health.error ? "unknown" : s.receiver}
                       text={
                         !health.error && s.receiver === "ok"
-                          ? "Connected"
+                          ? t("Connected")
                           : undefined
                       }
                     />
@@ -151,30 +162,35 @@ export function Dashboard() {
                 },
                 {
                   key: "rtcm",
-                  label: "Corrections",
+                  label: t("Corrections"),
                   render: (s) => (
                     <Status
                       value={health.error ? "unknown" : s.rtcm}
                       text={
                         !health.error && s.rtcm === "ok"
-                          ? "Streaming"
+                          ? t("Streaming")
                           : undefined
                       }
                     />
                   ),
                 },
               ]}
-              empty="No base stations configured"
+              empty={t("No base stations configured")}
             />
-            <Box sx={{ mt: 2, textAlign: "right" }}>
+            <Box
+              sx={{
+                mt: 2,
+                textAlign: "right",
+              }}
+            >
               <Button href="/diagnostics" size="small">
-                Open diagnostics
+                {t("Open diagnostics")}
               </Button>
             </Box>
           </Panel>
           <Panel
-            title="Field connections"
-            caption="Rovers currently receiving corrections"
+            title={t("Field connections")}
+            caption={t("Rovers currently receiving corrections")}
             action={
               <Status
                 value={
@@ -186,24 +202,30 @@ export function Dashboard() {
                 }
                 text={
                   ntrip.error
-                    ? "Unavailable"
+                    ? t("Unavailable")
                     : ntrip.data?.running
-                      ? "NTRIP online"
-                      : "NTRIP offline"
+                      ? t("NTRIP online")
+                      : t("NTRIP offline")
                 }
               />
             }
           >
             <DataTable
               rows={ntrip.data?.connections || []}
-              empty="No rovers connected"
+              empty={t("No rovers connected")}
               columns={[
-                { key: "rover", label: "Rover" },
-                { key: "mountpoint" },
+                {
+                  key: "rover",
+                  label: t("Rover"),
+                },
+                {
+                  key: "mountpoint",
+                },
                 {
                   key: "duration",
-                  label: "Session",
-                  render: (r) => `${Math.floor((r.duration || 0) / 60)} min`,
+                  label: t("Session"),
+                  render: (r) =>
+                    t("{0} min", [Math.floor((r.duration || 0) / 60)]),
                 },
               ]}
             />
@@ -211,21 +233,28 @@ export function Dashboard() {
         </Stack>
         <Stack spacing={2.5}>
           <Panel
-            title="Host resources"
-            caption={system.data?.system?.hostname || "Caster computer"}
+            title={t("Host resources")}
+            caption={system.data?.system?.hostname || t("Caster computer")}
           >
             {[
               ["CPU", resources.cpu_percent],
               ["Memory", resources.memory_percent],
               ["Storage", resources.disk_percent],
             ].map(([name, value]) => (
-              <Box key={name} sx={{ my: 2.5 }}>
+              <Box
+                key={t(name)}
+                sx={{
+                  my: 2.5,
+                }}
+              >
                 <Stack
                   direction="row"
                   justifyContent="space-between"
-                  sx={{ mb: 1 }}
+                  sx={{
+                    mb: 1,
+                  }}
                 >
-                  <Typography variant="body2">{name}</Typography>
+                  <Typography variant="body2">{t(name)}</Typography>
                   <Typography variant="body2" fontWeight={600}>
                     {value == null ? "—" : `${value.toFixed(0)}%`}
                   </Typography>
@@ -234,7 +263,10 @@ export function Dashboard() {
                   variant="determinate"
                   value={value ?? 0}
                   color={value > 90 ? "warning" : "primary"}
-                  sx={{ height: 6, borderRadius: 3 }}
+                  sx={{
+                    height: 6,
+                    borderRadius: 3,
+                  }}
                 />
               </Box>
             ))}
@@ -242,42 +274,45 @@ export function Dashboard() {
             <Stack
               direction="row"
               justifyContent="space-between"
-              sx={{ pt: 2 }}
+              sx={{
+                pt: 2,
+              }}
             >
               <Typography variant="body2" color="text.secondary">
-                CPU temperature
+                {t("CPU temperature")}
               </Typography>
               <Typography variant="body2">
                 {resources.cpu_temp_c == null
                   ? "—"
-                  : `${resources.cpu_temp_c.toFixed(1)} °C`}
+                  : t("{0} \xB0C", [resources.cpu_temp_c.toFixed(1)])}
               </Typography>
             </Stack>
           </Panel>
-          <Panel title="Workspace tools">
+          <Panel title={t("Workspace tools")}>
             <Stack spacing={1}>
               <Button href="/backups" variant="outlined">
-                Backup & restore
+                {t("Backup & restore")}
               </Button>
               <Button href="/logs" variant="outlined">
-                View event logs
+                {t("View event logs")}
               </Button>
               <Button href="/rtcm_settings" variant="outlined">
-                Configure RTCM messages
+                {t("Configure RTCM messages")}
               </Button>
             </Stack>
           </Panel>
           <Typography variant="caption" color="text.secondary">
             {health.updatedAt
-              ? `Updated ${health.updatedAt.toLocaleTimeString()}`
-              : "Waiting for station data"}
+              ? t("Updated {0}", [
+                  health.updatedAt.toLocaleTimeString(getLocale()),
+                ])
+              : t("Waiting for station data")}
           </Typography>
         </Stack>
       </Box>
     </>
   );
 }
-
 export function Diagnostics() {
   const health = useResource("/api/diagnostics"),
     host = useResource("/api/status"),
@@ -286,9 +321,11 @@ export function Diagnostics() {
   return (
     <>
       <PageTitle
-        eyebrow="MAINTENANCE"
-        title="Diagnostics"
-        description="Component health, receiver recovery and correction quality."
+        eyebrow={t("MAINTENANCE")}
+        title={t("Diagnostics")}
+        description={t(
+          "Component health, receiver recovery and correction quality.",
+        )}
         action={
           <Button
             variant="outlined"
@@ -299,7 +336,7 @@ export function Diagnostics() {
               readiness.refresh();
             }}
           >
-            Run checks
+            {t("Run checks")}
           </Button>
         }
       />
@@ -320,52 +357,73 @@ export function Diagnostics() {
             action={<Status value={item.status} />}
           >
             <Typography variant="body2" color="text.secondary">
-              {item.message}
+              {serverMessage(item.message)}
             </Typography>
           </Panel>
         ))}
       </GridBox>
       <Panel
-        title="Receiver health"
-        caption="RTCM becomes stale after 30 seconds without a valid frame. Checks refresh every 30 seconds."
-        sx={{ mt: 3 }}
+        title={t("Receiver health")}
+        caption={t(
+          "RTCM becomes stale after 30 seconds without a valid frame. Checks refresh every 30 seconds.",
+        )}
+        sx={{
+          mt: 3,
+        }}
       >
         <DataTable
           rows={health.data?.stations || []}
           columns={[
-            { key: "name", label: "Receiver" },
+            {
+              key: "name",
+              label: t("Receiver"),
+            },
             {
               key: "rtcm",
-              label: "RTCM",
+              label: t("RTCM"),
               render: (r) => <Status value={r.rtcm} />,
             },
             {
               key: "last_frame_age_seconds",
-              label: "Last valid frame",
+              label: t("Last valid frame"),
               render: (r) =>
                 r.last_frame_age_seconds == null
-                  ? "Never"
-                  : `${r.last_frame_age_seconds} s ago`,
+                  ? t("Never")
+                  : t("{0} s ago", [r.last_frame_age_seconds]),
             },
             {
               key: "frames_parsed",
-              label: "Valid frames",
+              label: t("Valid frames"),
               render: (r) => number(r.frames_parsed),
             },
             {
               key: "crc_failures",
-              label: "CRC failures",
+              label: t("CRC failures"),
               render: (r) => number(r.crc_failures),
             },
-            { key: "message", label: "Details" },
+            {
+              key: "message",
+              label: t("Details"),
+              render: (r) => serverMessage(r.message),
+            },
           ]}
         />
       </Panel>
       <GridBox>
-        <Panel title="Connection recovery" sx={{ mt: 3 }}>
+        <Panel
+          title={t("Connection recovery")}
+          sx={{
+            mt: 3,
+          }}
+        >
           <ResourceState resource={bt} />
           {(bt.data?.stations || []).map((s) => (
-            <Box key={s.id} sx={{ mb: 3 }}>
+            <Box
+              key={s.id}
+              sx={{
+                mb: 3,
+              }}
+            >
               <Typography fontWeight={600}>{s.name}</Typography>
               <KeyValues
                 data={{
@@ -380,13 +438,23 @@ export function Diagnostics() {
             </Box>
           ))}
         </Panel>
-        <Panel title="Host information" sx={{ mt: 3 }}>
+        <Panel
+          title={t("Host information")}
+          sx={{
+            mt: 3,
+          }}
+        >
           <ResourceState resource={host} />
           <KeyValues data={host.data?.system} />
           <KeyValues data={host.data?.resources} />
         </Panel>
       </GridBox>
-      <Panel title="Field readiness" sx={{ mt: 3 }}>
+      <Panel
+        title={t("Field readiness")}
+        sx={{
+          mt: 3,
+        }}
+      >
         <ResourceState resource={readiness} />
         <Readiness data={readiness.data} />
       </Panel>
@@ -399,7 +467,18 @@ export function Readiness({ data }) {
     return (
       <Stack spacing={2}>
         {(data.issues || []).length > 0 && (
-          <Alert severity="warning">{data.issues.join(" · ")}</Alert>
+          <Alert severity="warning">
+            {data.issues
+              .map((issue) => {
+                const station = data.stations.find((s) =>
+                  issue.startsWith(`${s.name}: `),
+                );
+                return station
+                  ? `${station.name}: ${serverMessage(issue.slice(station.name.length + 2))}`
+                  : serverMessage(issue);
+              })
+              .join(" · ")}
+          </Alert>
         )}
         {data.stations.map((s) => (
           <Box key={s.id}>
@@ -407,13 +486,16 @@ export function Readiness({ data }) {
               <Typography fontWeight={600}>{s.name}</Typography>
               <Status
                 value={s.ready ? "ok" : "warning"}
-                text={s.ready ? "Ready" : "Needs attention"}
+                text={s.ready ? t("Ready") : t("Needs attention")}
               />
             </Stack>
             <Typography variant="body2" color="text.secondary">
               {s.issues?.length
-                ? s.issues.join(" · ")
-                : `${s.satellites ?? "—"} satellites · ${s.rovers ?? 0} rovers`}
+                ? s.issues.map(serverMessage).join(" · ")
+                : t("{0} satellites \xB7 {1} rovers", [
+                    s.satellites ?? "—",
+                    s.rovers ?? 0,
+                  ])}
             </Typography>
           </Box>
         ))}
@@ -446,28 +528,47 @@ export function Rovers() {
     resource = useResource("/api/rovers"),
     mounts = useResource("/api/mountpoints");
   const schema = [
-    { key: "username", required: true },
+    {
+      key: "username",
+      required: true,
+    },
     {
       key: "password",
       type: "password",
       required: false,
-      help: "Required for new rovers. Leave blank when editing to keep the password.",
+      help: t(
+        "Required for new rovers. Leave blank when editing to keep the password.",
+      ),
     },
-    { key: "email", type: "email" },
-    { key: "max_conn", label: "Maximum connections", type: "number", min: 1 },
+    {
+      key: "email",
+      type: "email",
+    },
+    {
+      key: "max_conn",
+      label: t("Maximum connections"),
+      type: "number",
+      min: 1,
+    },
     {
       key: "mountpoints_text",
-      label: "Allowed mountpoints",
+      label: t("Allowed mountpoints"),
       wide: true,
-      help: `Comma-separated names. Available: ${(mounts.data || []).map((m) => m.name).join(", ") || "none"}. Leave blank for all.`,
+      help: t("Comma-separated names. Available: {0}. Leave blank for all.", [
+        (mounts.data || []).map((m) => m.name).join(", ") || "none",
+      ]),
     },
     {
       key: "expires_date",
-      label: "Expires on",
+      label: t("Expires on"),
       type: "date",
-      help: "Leave blank for no expiration.",
+      help: t("Leave blank for no expiration."),
     },
-    { key: "is_active", label: "Enabled", type: "boolean" },
+    {
+      key: "is_active",
+      label: t("Enabled"),
+      type: "boolean",
+    },
   ];
   const data = resource.data?.map((r) => ({
     ...r,
@@ -478,11 +579,17 @@ export function Rovers() {
   }));
   return (
     <CrudPage
-      title="Rovers"
-      description="Field accounts and access to correction streams."
-      resource={{ ...resource, data }}
+      title={t("Rovers")}
+      description={t("Field accounts and access to correction streams.")}
+      resource={{
+        ...resource,
+        data,
+      }}
       schema={schema}
-      defaults={{ max_conn: 1, is_active: true }}
+      defaults={{
+        max_conn: 1,
+        is_active: true,
+      }}
       base="/api/rovers"
       canEdit={canEdit}
       prepare={(r) => ({
@@ -500,29 +607,35 @@ export function Rovers() {
           : 0,
       })}
       columns={[
-        { key: "username", label: "Rover" },
+        {
+          key: "username",
+          label: t("Rover"),
+        },
         {
           key: "is_active",
-          label: "Access",
+          label: t("Access"),
           render: (r) => (
             <Status value={r.is_active ? "enabled" : "disabled"} />
           ),
         },
         {
           key: "active_conn",
-          label: "Connections",
+          label: t("Connections"),
           render: (r) => `${r.active_conn} / ${r.max_conn}`,
         },
         {
           key: "mountpoints_text",
-          label: "Mountpoints",
+          label: t("Mountpoints"),
           render: (r) => r.mountpoints_text || "All",
         },
         {
           key: "expires",
-          render: (r) => (r.expires ? date(r.expires) : "Never"),
+          render: (r) => (r.expires ? date(r.expires) : t("Never")),
         },
-        { key: "last_connection", render: (r) => date(r.last_connection) },
+        {
+          key: "last_connection",
+          render: (r) => date(r.last_connection),
+        },
       ]}
     />
   );
@@ -533,8 +646,8 @@ export function Mountpoints() {
     stations = useResource("/api/base_stations");
   return (
     <CrudPage
-      title="Mountpoints"
-      description="Publish each base station as a named NTRIP stream."
+      title={t("Mountpoints")}
+      description={t("Publish each base station as a named NTRIP stream.")}
       resource={{
         ...resource,
         data: resource.data?.map((r) => ({
@@ -544,30 +657,43 @@ export function Mountpoints() {
       }}
       base="/api/mountpoints"
       canEdit={canEdit}
-      defaults={{ is_active: true, rtcm_json: "{}" }}
+      defaults={{
+        is_active: true,
+        rtcm_json: "{}",
+      }}
       schema={[
         {
           key: "name",
           required: true,
-          help: "Letters, numbers, underscores and dashes.",
+          help: t("Letters, numbers, underscores and dashes."),
         },
         {
           key: "base_id",
-          label: "Base station",
+          label: t("Base station"),
           required: true,
           options: (stations.data || []).map((s) => ({
             value: s.id,
             label: s.name,
+            literal: true,
           })),
         },
-        { key: "description", wide: true },
-        { key: "is_active", label: "Enabled", type: "boolean" },
+        {
+          key: "description",
+          wide: true,
+        },
+        {
+          key: "is_active",
+          label: t("Enabled"),
+          type: "boolean",
+        },
         {
           key: "rtcm_json",
-          label: "RTCM overrides (JSON)",
+          label: t("RTCM overrides (JSON)"),
           type: "multiline",
           wide: true,
-          help: 'Optional message overrides, for example {"1077": true}. Empty object uses global settings.',
+          help: t(
+            'Optional message overrides, for example {"1077": true}. Empty object uses global settings.',
+          ),
         },
       ]}
       prepare={(r) => {
@@ -590,17 +716,21 @@ export function Mountpoints() {
         };
       }}
       columns={[
-        { key: "name" },
+        {
+          key: "name",
+        },
         {
           key: "base_id",
-          label: "Base station",
+          label: t("Base station"),
           render: (r) =>
             stations.data?.find((s) => s.id === r.base_id)?.name || r.base_id,
         },
-        { key: "description" },
+        {
+          key: "description",
+        },
         {
           key: "is_active",
-          label: "Status",
+          label: t("Status"),
           render: (r) => (
             <Status value={r.is_active ? "enabled" : "disabled"} />
           ),
@@ -615,53 +745,72 @@ export function Logs() {
     [search, setSearch] = useState("");
   const params = new URLSearchParams({
     limit: "200",
-    ...(level ? { level } : {}),
-    ...(module ? { module } : {}),
+    ...(level
+      ? {
+          level,
+        }
+      : {}),
+    ...(module
+      ? {
+          module,
+        }
+      : {}),
   });
   const resource = useResource(`/api/logs?${params}`);
   return (
     <>
       <PageTitle
-        title="Event logs"
-        eyebrow="MAINTENANCE"
-        description="Connection events, receiver messages and administrative changes."
+        title={t("Event logs")}
+        eyebrow={t("MAINTENANCE")}
+        description={t(
+          "Connection events, receiver messages and administrative changes.",
+        )}
         action={
           <Button variant="outlined" href={`/api/logs/export?${params}`}>
-            Export CSV
+            {t("Export CSV")}
           </Button>
         }
       />
       <Panel>
         <Stack
-          direction={{ xs: "column", sm: "row" }}
+          direction={{
+            xs: "column",
+            sm: "row",
+          }}
           spacing={2}
-          sx={{ mb: 3 }}
+          sx={{
+            mb: 3,
+          }}
         >
           <TextField
             select
-            label="Level"
+            label={t("Level")}
             value={level}
             onChange={(e) => setLevel(e.target.value)}
-            sx={{ minWidth: 140 }}
+            sx={{
+              minWidth: 140,
+            }}
           >
             {["", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"].map((v) => (
               <MenuItem key={v} value={v}>
-                {v || "All levels"}
+                {v || t("All levels")}
               </MenuItem>
             ))}
           </TextField>
           <TextField
-            label="Module"
+            label={t("Module")}
             value={module}
             onChange={(e) => setModule(e.target.value)}
           />
           <TextField
-            label="Search messages"
+            label={t("Search messages")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            sx={{ flex: 1 }}
+            sx={{
+              flex: 1,
+            }}
           />
-          <Button onClick={resource.refresh}>Refresh</Button>
+          <Button onClick={resource.refresh}>{t("Refresh")}</Button>
         </Stack>
         <ResourceState resource={resource} />
         <DataTable
@@ -671,13 +820,26 @@ export function Logs() {
           columns={[
             {
               key: "timestamp",
-              label: "Time",
+              label: t("Time"),
               render: (r) => date(r.timestamp),
-              sx: { whiteSpace: "nowrap" },
+              sx: {
+                whiteSpace: "nowrap",
+              },
             },
-            { key: "level", render: (r) => <Status value={r.level} /> },
-            { key: "module" },
-            { key: "message", sx: { minWidth: 280, overflowWrap: "anywhere" } },
+            {
+              key: "level",
+              render: (r) => <Status value={r.level} />,
+            },
+            {
+              key: "module",
+            },
+            {
+              key: "message",
+              sx: {
+                minWidth: 280,
+                overflowWrap: "anywhere",
+              },
+            },
           ]}
           pageSize={25}
         />
@@ -716,8 +878,8 @@ export function Rtcm() {
   return (
     <>
       <PageTitle
-        title="RTCM messages"
-        description="Choose which correction messages are sent to rovers."
+        title={t("RTCM messages")}
+        description={t("Choose which correction messages are sent to rovers.")}
         action={
           canEdit && (
             <Button
@@ -728,13 +890,15 @@ export function Rtcm() {
                   () =>
                     api("/api/rtcm/settings/update", {
                       method: "POST",
-                      body: { settings: values },
+                      body: {
+                        settings: values,
+                      },
                     }),
                   reload,
                 )
               }
             >
-              Save changes
+              {t("Save changes")}
             </Button>
           )
         }
@@ -743,19 +907,33 @@ export function Rtcm() {
       <ResourceState resource={messages} />
       <ResourceState resource={saved} />
       <ResourceState resource={presets} />
-      <Panel title="Message presets" sx={{ mb: 3 }}>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+      <Panel
+        title={t("Message presets")}
+        sx={{
+          mb: 3,
+        }}
+      >
+        <Stack
+          direction={{
+            xs: "column",
+            sm: "row",
+          }}
+          spacing={1.5}
+        >
           <TextField
             select
-            label="Saved preset"
+            label={t("Saved preset")}
             value={presetName}
             onChange={(e) => setPresetName(e.target.value)}
-            sx={{ minWidth: 220 }}
+            sx={{
+              minWidth: 220,
+            }}
           >
-            <MenuItem value="">Select a preset</MenuItem>
+            <MenuItem value="">{t("Select a preset")}</MenuItem>
             {(presets.data?.presets || []).map((p) => (
               <MenuItem key={p.name} value={p.name}>
-                {p.name} · {p.enabled_count} messages
+                {p.name} · {p.enabled_count}
+                {t(" messages")}
               </MenuItem>
             ))}
           </TextField>
@@ -765,52 +943,58 @@ export function Rtcm() {
                 disabled={!presetName}
                 onClick={() =>
                   setConfirmation({
-                    title: `Apply ${presetName}?`,
+                    title: t("Apply {0}?", [presetName]),
                     url: "/api/rtcm/presets/apply",
-                    body: { name: presetName },
+                    body: {
+                      name: presetName,
+                    },
                   })
                 }
               >
-                Apply
+                {t("Apply")}
               </Button>
               <Button
                 disabled={!presetName}
                 color="error"
                 onClick={() =>
                   setConfirmation({
-                    title: `Delete ${presetName}?`,
+                    title: t("Delete {0}?", [presetName]),
                     url: "/api/rtcm/presets/delete",
-                    body: { name: presetName },
+                    body: {
+                      name: presetName,
+                    },
                   })
                 }
               >
-                Delete
+                {t("Delete")}
               </Button>
               <Button onClick={() => setSavePreset(true)}>
-                Save as preset
+                {t("Save as preset")}
               </Button>
               <Button
                 color="warning"
                 onClick={() =>
                   setConfirmation({
-                    title: "Restore default messages?",
+                    title: t("Restore default messages?"),
                     url: "/api/rtcm/settings/reset",
                     body: {},
                   })
                 }
               >
-                Reset defaults
+                {t("Reset defaults")}
               </Button>
             </>
           )}
         </Stack>
       </Panel>
       <TextField
-        label="Search message ID or description"
+        label={t("Search message ID or description")}
         fullWidth
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        sx={{ mb: 3 }}
+        sx={{
+          mb: 3,
+        }}
       />
       <GridBox>
         {Object.entries(messages.data || {}).map(([group, items]) => {
@@ -826,7 +1010,9 @@ export function Rtcm() {
               action={
                 canEdit && (
                   <Switch
-                    inputProps={{ "aria-label": `Enable all ${group}` }}
+                    inputProps={{
+                      "aria-label": t("Enable all {0}", [group]),
+                    }}
                     checked={items.every((m) => values[m.type])}
                     onChange={(e) =>
                       setDraft({
@@ -842,20 +1028,34 @@ export function Rtcm() {
             >
               <DataTable
                 pageSize={10}
-                rows={filtered.map((m) => ({ ...m, id: m.type }))}
+                rows={filtered.map((m) => ({
+                  ...m,
+                  id: m.type,
+                }))}
                 columns={[
-                  { key: "type", label: "ID" },
-                  { key: "description", label: "Message" },
+                  {
+                    key: "type",
+                    label: t("ID"),
+                  },
+                  {
+                    key: "description",
+                    label: t("Message"),
+                  },
                   {
                     key: "enabled",
-                    label: "Enabled",
+                    label: t("Enabled"),
                     render: (m) => (
                       <Checkbox
                         disabled={!canEdit}
                         checked={!!values[m.type]}
-                        inputProps={{ "aria-label": `Message ${m.type}` }}
+                        inputProps={{
+                          "aria-label": t("Message {0}", [m.type]),
+                        }}
                         onChange={(e) =>
-                          setDraft({ ...values, [m.type]: e.target.checked })
+                          setDraft({
+                            ...values,
+                            [m.type]: e.target.checked,
+                          })
                         }
                       />
                     ),
@@ -869,7 +1069,7 @@ export function Rtcm() {
       {confirmation && (
         <Confirm
           title={confirmation.title}
-          description="This changes the saved correction configuration."
+          description={t("This changes the saved correction configuration.")}
           onClose={() => setConfirmation(null)}
           onConfirm={async () => {
             const r = await api(confirmation.url, {
@@ -883,14 +1083,22 @@ export function Rtcm() {
       )}
       {savePreset && (
         <FormDialog
-          title="Save message preset"
-          schema={[{ key: "name", required: true }]}
+          title={t("Save message preset")}
+          schema={[
+            {
+              key: "name",
+              required: true,
+            },
+          ]}
           initial={{}}
           onClose={() => setSavePreset(false)}
           onSubmit={async (v) => {
             const r = await api("/api/rtcm/presets/save", {
               method: "POST",
-              body: { name: v.name, settings: values },
+              body: {
+                name: v.name,
+                settings: values,
+              },
             });
             presets.refresh();
             return r;
@@ -898,8 +1106,13 @@ export function Rtcm() {
         />
       )}
       {draft && (
-        <Alert severity="info" sx={{ mt: 3 }}>
-          You have unsaved message changes.
+        <Alert
+          severity="info"
+          sx={{
+            mt: 3,
+          }}
+        >
+          {t("You have unsaved message changes.")}
         </Alert>
       )}
     </>

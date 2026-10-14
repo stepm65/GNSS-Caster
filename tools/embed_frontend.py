@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
-INSTALLER = ROOT / 'gnss-caster-install-3.0.1.sh'
+INSTALLER = ROOT / 'gnss-caster-install.sh'
 START = '# BEGIN GENERATED REACT UI\n'
 END = '# END GENERATED REACT UI\n'
 

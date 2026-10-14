@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -30,13 +31,18 @@ import {
   date,
   label,
 } from "../components";
-
-const field = (key, type = "text", extra = {}) => ({ key, type, ...extra });
+const field = (key, type = "text", extra = {}) => ({
+  key,
+  type,
+  ...extra,
+});
 const groups = [
   {
     name: "General",
     fields: [
-      field("system_name", "text", { required: true }),
+      field("system_name", "text", {
+        required: true,
+      }),
       field("bluetooth_name"),
       field("log_retention", "number", {
         label: "Log retention (days)",
@@ -56,7 +62,9 @@ const groups = [
   {
     name: "Connections",
     fields: [
-      field("ntrip_enabled", "boolean", { label: "NTRIP server enabled" }),
+      field("ntrip_enabled", "boolean", {
+        label: "NTRIP server enabled",
+      }),
       field("max_connections", "number", {
         label: "Maximum NTRIP connections",
         min: 1,
@@ -70,10 +78,29 @@ const groups = [
     name: "Notifications",
     fields: [
       field("telegram_enabled", "boolean"),
+      field("telegram_language", "text", {
+        label: "Telegram language",
+        options: [
+          {
+            value: "en",
+            label: "English",
+          },
+          {
+            value: "ru",
+            label: "Русский",
+          },
+        ],
+      }),
       field("telegram_commands_enabled", "boolean"),
-      field("telegram_bot_token", "password", { label: "Telegram bot token" }),
-      field("telegram_chat_id", "text", { label: "Notification chat ID" }),
-      field("telegram_admin_id", "text", { label: "Administrator chat ID" }),
+      field("telegram_bot_token", "password", {
+        label: "Telegram bot token",
+      }),
+      field("telegram_chat_id", "text", {
+        label: "Notification chat ID",
+      }),
+      field("telegram_admin_id", "text", {
+        label: "Administrator chat ID",
+      }),
       field("telegram_send_backup", "boolean", {
         label: "Send backup files to Telegram",
       }),
@@ -85,13 +112,21 @@ const groups = [
         "rover_disconnect",
         "backup",
         "service",
-      ].map((k) => field(`notify_${k}`, "boolean", { label: label(k) })),
+      ].map((k) =>
+        field(`notify_${k}`, "boolean", {
+          label: k
+            .replaceAll("_", " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase()),
+        }),
+      ),
     ],
   },
   {
     name: "Backup policy",
     fields: [
-      field("auto_backup", "boolean", { label: "Automatic backups" }),
+      field("auto_backup", "boolean", {
+        label: "Automatic backups",
+      }),
       field("backup_interval", "number", {
         label: "Backup interval (seconds)",
         min: 3600,
@@ -110,7 +145,6 @@ const groups = [
     ],
   },
 ];
-
 function SettingsForm({ group, settings, onSaved }) {
   const { isAdmin } = useContext(Session),
     action = useAction();
@@ -156,7 +190,9 @@ function SettingsForm({ group, settings, onSaved }) {
   return (
     <Panel
       title={group.name}
-      caption="Changes are saved explicitly. Connection settings may require a service restart."
+      caption={t(
+        "Changes are saved explicitly. Connection settings may require a service restart.",
+      )}
     >
       <Box
         component="form"
@@ -185,7 +221,7 @@ function SettingsForm({ group, settings, onSaved }) {
             settings[f.key]?.is_secret
               ? {
                   ...f,
-                  help: `${settings[f.key].is_set ? "A value is stored." : "No value is stored."} Leave blank to keep it. ${f.help || ""}`,
+                  help: `${t(settings[f.key].is_set ? "A value is stored." : "No value is stored.")} ${t("Leave blank to keep it.")} ${t(f.help || "")}`,
                 }
               : f,
           )}
@@ -193,14 +229,20 @@ function SettingsForm({ group, settings, onSaved }) {
           onChange={setValue}
           disabled={!isAdmin || action.busy}
         />
-        <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{
+            mt: 3,
+          }}
+        >
           {isAdmin && (
             <Button
               variant="contained"
               type="submit"
               disabled={action.busy || !Object.keys(changed).length}
             >
-              Save {group.name.toLowerCase()}
+              {t(`Save ${group.name.toLowerCase()}`)}
             </Button>
           )}
           {group.name === "Notifications" && isAdmin && (
@@ -208,11 +250,13 @@ function SettingsForm({ group, settings, onSaved }) {
               disabled={action.busy}
               onClick={() =>
                 action.run(() =>
-                  api("/api/system/notify/test", { method: "POST" }),
+                  api("/api/system/notify/test", {
+                    method: "POST",
+                  }),
                 )
               }
             >
-              Send test notification
+              {t("Send test notification")}
             </Button>
           )}
         </Stack>
@@ -239,7 +283,11 @@ function PrivilegedJob({ id }) {
       setFinished(true);
   }, [resource.data, resource.error]);
   return (
-    <Box sx={{ mt: 2 }}>
+    <Box
+      sx={{
+        mt: 2,
+      }}
+    >
       <ResourceState resource={resource} />
       {resource.data && (
         <Alert
@@ -252,7 +300,7 @@ function PrivilegedJob({ id }) {
                 : "info"
           }
         >
-          {resource.data.kind || "Settings update"}:{" "}
+          {resource.data.kind || t("Settings update")}:{" "}
           {resource.data.error || resource.data.message || resource.data.status}
         </Alert>
       )}
@@ -272,15 +320,22 @@ function SystemSettings() {
   return (
     <>
       <PageTitle
-        title="System settings"
-        eyebrow="MANAGEMENT"
-        description="Configure this caster, notifications and maintenance policies."
+        title={t("System settings")}
+        eyebrow={t("MANAGEMENT")}
+        description={t(
+          "Configure this caster, notifications and maintenance policies.",
+        )}
       />
       <ResourceState resource={settings} />
       <Notice value={action.notice} />
       {!isAdmin && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Your account has read-only access to system settings.
+        <Alert
+          severity="info"
+          sx={{
+            mb: 2,
+          }}
+        >
+          {t("Your account has read-only access to system settings.")}
         </Alert>
       )}
       <Tabs
@@ -288,13 +343,15 @@ function SystemSettings() {
         onChange={(_, v) => setTab(v)}
         variant="scrollable"
         allowScrollButtonsMobile
-        sx={{ mb: 3 }}
+        sx={{
+          mb: 3,
+        }}
       >
         {groups.map((g) => (
-          <Tab key={g.name} label={g.name} />
+          <Tab key={g.name} label={t(g.name)} />
         ))}
-        <Tab label="Certificates" />
-        <Tab label="Power" />
+        <Tab label={t("Certificates")} />
+        <Tab label={t("Power")} />
       </Tabs>
       {tab < groups.length && settings.data && (
         <SettingsForm
@@ -306,41 +363,52 @@ function SystemSettings() {
       )}
       {tab === 4 && (
         <Panel
-          title="TLS certificates"
-          caption="HTTPS certificate information and renewal."
+          title={t("TLS certificates")}
+          caption={t("HTTPS certificate information and renewal.")}
         >
           <ResourceState resource={tls} />
           <KeyValues data={tls.data} />
           {isAdmin && (
-            <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{
+                mt: 3,
+              }}
+            >
               <Button
                 disabled={action.busy}
                 variant="outlined"
                 onClick={() =>
                   setConfirm({
-                    title: "Renew HTTPS certificates?",
-                    description: "Runs certificate renewal on the caster.",
+                    title: t("Renew HTTPS certificates?"),
+                    description: t("Runs certificate renewal on the caster."),
                     url: "/api/system/tls/renew",
-                    body: { force: false },
+                    body: {
+                      force: false,
+                    },
                   })
                 }
               >
-                Renew certificates
+                {t("Renew certificates")}
               </Button>
               <Button
                 disabled={action.busy}
                 color="warning"
                 onClick={() =>
                   setConfirm({
-                    title: "Force certificate renewal?",
-                    description:
+                    title: t("Force certificate renewal?"),
+                    description: t(
                       "Requests a new certificate even if renewal is not due. Certificate authority rate limits apply.",
+                    ),
                     url: "/api/system/tls/renew",
-                    body: { force: true },
+                    body: {
+                      force: true,
+                    },
                   })
                 }
               >
-                Force renewal
+                {t("Force renewal")}
               </Button>
             </Stack>
           )}
@@ -348,11 +416,19 @@ function SystemSettings() {
       )}
       {tab === 5 && (
         <Panel
-          title="Host power"
-          caption="These actions interrupt all correction streams and disconnect the web interface."
+          title={t("Host power")}
+          caption={t(
+            "These actions interrupt all correction streams and disconnect the web interface.",
+          )}
         >
           {isAdmin ? (
-            <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{
+                mt: 3,
+              }}
+            >
               {["reboot", "shutdown"].map((type) => (
                 <Button
                   key={type}
@@ -360,12 +436,15 @@ function SystemSettings() {
                   variant="outlined"
                   onClick={() =>
                     setConfirm({
-                      title: `${label(type)} the caster?`,
-                      description:
+                      title: t("{0} the caster?", [label(type)]),
+                      description: t(
                         "All connected rovers will lose corrections. Make sure field work has finished before continuing.",
+                      ),
                       word: type,
                       url: `/api/system/power/${type}`,
-                      body: { confirm: type },
+                      body: {
+                        confirm: type,
+                      },
                     })
                   }
                 >
@@ -374,7 +453,7 @@ function SystemSettings() {
               ))}
             </Stack>
           ) : (
-            <Alert severity="info">Administrator access required.</Alert>
+            <Alert severity="info">{t("Administrator access required.")}</Alert>
           )}
         </Panel>
       )}
@@ -388,7 +467,10 @@ function SystemSettings() {
               body: confirm.body,
               timeout: 180000,
             });
-            action.setNotice({ severity: "info", text: result.message });
+            action.setNotice({
+              severity: "info",
+              text: result.message,
+            });
             tls.refresh();
             return result;
           }}
@@ -397,7 +479,6 @@ function SystemSettings() {
     </>
   );
 }
-
 function Backups() {
   const { isAdmin, canEdit } = useContext(Session),
     backups = useResource("/api/system/backups?limit=50"),
@@ -465,9 +546,15 @@ function Backups() {
         severity: "success",
         text: "Backup uploaded. Review the archive below before restoring.",
       });
-      setConfirm({ type: "restore", filename: result.filename });
+      setConfirm({
+        type: "restore",
+        filename: result.filename,
+      });
     } catch (e) {
-      action.setNotice({ severity: "error", text: e.message });
+      action.setNotice({
+        severity: "error",
+        text: e.message,
+      });
     } finally {
       setUploading(false);
       uploadController.current = null;
@@ -477,9 +564,11 @@ function Backups() {
   return (
     <>
       <PageTitle
-        title="Backups & restore"
-        eyebrow="MAINTENANCE"
-        description="Keep recovery copies and restore a backup from any date."
+        title={t("Backups & restore")}
+        eyebrow={t("MAINTENANCE")}
+        description={t(
+          "Keep recovery copies and restore a backup from any date.",
+        )}
         action={
           canEdit && (
             <Button
@@ -488,12 +577,15 @@ function Backups() {
               disabled={action.busy || activeJob || uploading}
               onClick={() =>
                 action.run(
-                  () => api("/api/system/backups/create", { method: "POST" }),
+                  () =>
+                    api("/api/system/backups/create", {
+                      method: "POST",
+                    }),
                   rememberJob,
                 )
               }
             >
-              Create backup
+              {t("Create backup")}
             </Button>
           )
         }
@@ -502,12 +594,14 @@ function Backups() {
       <ResourceState resource={backups} />
       {job && (
         <Panel
-          title="Maintenance job"
+          title={t("Maintenance job")}
           caption={job.filename || job.unit_name}
-          sx={{ mb: 3 }}
+          sx={{
+            mb: 3,
+          }}
           action={
             <Button onClick={dismissJob}>
-              {finished ? "Dismiss" : "Hide job"}
+              {finished ? t("Dismiss") : t("Hide job")}
             </Button>
           }
         >
@@ -522,34 +616,60 @@ function Backups() {
             }
           >
             {jobResource.data?.message ||
-              "Waiting for the job status. The server may briefly disconnect during restoration."}
+              t(
+                "Waiting for the job status. The server may briefly disconnect during restoration.",
+              )}
           </Alert>
           {jobResource.error && (
-            <Button onClick={jobResource.refresh}>Check job status</Button>
+            <Button onClick={jobResource.refresh}>
+              {t("Check job status")}
+            </Button>
           )}
         </Panel>
       )}
       {isAdmin && (
-        <Panel sx={{ mb: 3, borderStyle: "dashed", bgcolor: "action.hover" }}>
+        <Panel
+          sx={{
+            mb: 3,
+            borderStyle: "dashed",
+            bgcolor: "action.hover",
+          }}
+        >
           <Stack
-            direction={{ xs: "column", sm: "row" }}
-            alignItems={{ sm: "center" }}
+            direction={{
+              xs: "column",
+              sm: "row",
+            }}
+            alignItems={{
+              sm: "center",
+            }}
             spacing={3}
           >
-            <Box sx={{ flex: 1 }}>
+            <Box
+              sx={{
+                flex: 1,
+              }}
+            >
               <Typography variant="h6">
-                Restore a file from your computer
+                {t("Restore a file from your computer")}
               </Typography>
-              <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
-                Choose a backup you downloaded from Telegram or saved elsewhere.
-                Supports .tar.gz and encrypted .tar.gz.enc files up to 128 MiB.
+              <Typography
+                color="text.secondary"
+                variant="body2"
+                sx={{
+                  mt: 1,
+                }}
+              >
+                {t(
+                  "Choose a backup you downloaded from Telegram or saved elsewhere. Supports .tar.gz and encrypted .tar.gz.enc files up to 128 MiB.",
+                )}
               </Typography>
             </Box>
             <input
               ref={fileInput}
               type="file"
               accept=".gz,.enc"
-              aria-label="Choose backup file"
+              aria-label={t("Choose backup file")}
               hidden
               onChange={(e) => upload(e.target.files?.[0])}
             />
@@ -559,27 +679,33 @@ function Backups() {
               disabled={uploading || activeJob || action.busy}
               onClick={() => fileInput.current.click()}
             >
-              Choose backup file
+              {t("Choose backup file")}
             </Button>
           </Stack>
           {uploading && (
-            <Box sx={{ mt: 3 }}>
+            <Box
+              sx={{
+                mt: 3,
+              }}
+            >
               <LinearProgress variant="determinate" value={progress} />
               <Stack
                 direction="row"
                 justifyContent="space-between"
-                sx={{ mt: 1 }}
+                sx={{
+                  mt: 1,
+                }}
               >
                 <Typography variant="body2">
                   {progress < 100
-                    ? `Uploading · ${progress}%`
-                    : "Upload complete. Checking file…"}
+                    ? t("Uploading \xB7 {0}%", [progress])
+                    : t("Upload complete. Checking file\u2026")}
                 </Typography>
                 <Button
                   size="small"
                   onClick={() => uploadController.current?.abort()}
                 >
-                  Cancel upload
+                  {t("Cancel upload")}
                 </Button>
               </Stack>
             </Box>
@@ -587,22 +713,28 @@ function Backups() {
         </Panel>
       )}
       <Panel
-        title="Saved backups"
-        caption={`${backups.data?.count ?? 0} archives · ${bytes(backups.data?.total_size_bytes)}`}
-        action={<Button onClick={backups.refresh}>Refresh</Button>}
+        title={t("Saved backups")}
+        caption={t("{0} archives \xB7 {1}", [
+          backups.data?.count ?? 0,
+          bytes(backups.data?.total_size_bytes),
+        ])}
+        action={<Button onClick={backups.refresh}>{t("Refresh")}</Button>}
       >
         <DataTable
           rows={backups.data?.items || []}
           columns={[
-            { key: "filename", label: "Backup archive" },
+            {
+              key: "filename",
+              label: t("Backup archive"),
+            },
             {
               key: "modified_at",
-              label: "Date",
+              label: t("Date"),
               render: (r) => date(r.modified_at),
             },
             {
               key: "size_bytes",
-              label: "Size",
+              label: t("Size"),
               render: (r) => bytes(r.size_bytes),
             },
           ]}
@@ -612,10 +744,13 @@ function Backups() {
                 size="small"
                 disabled={action.busy || activeJob}
                 onClick={() =>
-                  setConfirm({ type: "verify", filename: r.filename })
+                  setConfirm({
+                    type: "verify",
+                    filename: r.filename,
+                  })
                 }
               >
-                Verify
+                {t("Verify")}
               </Button>
               {isAdmin && (
                 <>
@@ -623,26 +758,32 @@ function Backups() {
                     size="small"
                     href={`/api/system/backups/download/${encodeURIComponent(r.filename)}`}
                   >
-                    Download
+                    {t("Download")}
                   </Button>
                   <Button
                     size="small"
                     disabled={activeJob || uploading}
                     onClick={() =>
-                      setConfirm({ type: "restore", filename: r.filename })
+                      setConfirm({
+                        type: "restore",
+                        filename: r.filename,
+                      })
                     }
                   >
-                    Restore
+                    {t("Restore")}
                   </Button>
                   <Button
                     size="small"
                     color="error"
                     disabled={activeJob || uploading}
                     onClick={() =>
-                      setConfirm({ type: "delete", filename: r.filename })
+                      setConfirm({
+                        type: "delete",
+                        filename: r.filename,
+                      })
                     }
                   >
-                    Delete
+                    {t("Delete")}
                   </Button>
                 </>
               )}
@@ -650,31 +791,45 @@ function Backups() {
           )}
         />
       </Panel>
-      <Box sx={{ mt: 3 }}>
+      <Box
+        sx={{
+          mt: 3,
+        }}
+      >
         <ResourceState resource={storage} />
         {storage.data?.warnings?.map((text, i) => (
-          <Alert severity="warning" key={i} sx={{ mb: 2 }}>
+          <Alert
+            severity="warning"
+            key={i}
+            sx={{
+              mb: 2,
+            }}
+          >
             {text}
           </Alert>
         ))}
         <GridBox>
-          <Panel title="Local storage">
+          <Panel title={t("Local storage")}>
             <KeyValues data={storage.data?.local} />
           </Panel>
-          <Panel title="External copy">
+          <Panel title={t("External copy")}>
             <KeyValues data={storage.data?.external} />
           </Panel>
         </GridBox>
       </Box>
       {confirm && (
         <Confirm
-          title={`${label(confirm.type)} backup?`}
+          title={t("{0} backup?", [label(confirm.type)])}
           description={
             confirm.type === "restore"
-              ? "Restoration replaces the caster data and configuration, stops correction streams and restarts the service. Your session may end. Only continue after field work has stopped."
+              ? t(
+                  "Restoration replaces the caster data and configuration, stops correction streams and restarts the service. Your session may end. Only continue after field work has stopped.",
+                )
               : confirm.type === "delete"
-                ? "This permanently deletes the selected archive."
-                : "Checks whether this archive can be read. Restoration performs additional checks before replacing any data."
+                ? t("This permanently deletes the selected archive.")
+                : t(
+                    "Checks whether this archive can be read. Restoration performs additional checks before replacing any data.",
+                  )
           }
           word={confirm.type === "restore" ? "RESTORE" : undefined}
           password={
@@ -686,12 +841,19 @@ function Backups() {
               method: "POST",
               body: {
                 filename: confirm.filename,
-                ...(passphrase ? { passphrase } : {}),
+                ...(passphrase
+                  ? {
+                      passphrase,
+                    }
+                  : {}),
               },
               timeout: confirm.type === "verify" ? 260000 : 30000,
             });
             rememberJob(result);
-            action.setNotice({ severity: "info", text: result.message });
+            action.setNotice({
+              severity: "info",
+              text: result.message,
+            });
             backups.refresh();
             return result;
           }}

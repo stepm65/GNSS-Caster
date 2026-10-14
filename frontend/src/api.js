@@ -1,6 +1,8 @@
+import { t } from "./i18n.js";
+
 export class ApiError extends Error {
   constructor(message, status = 0) {
-    super(message);
+    super(t(message));
     this.status = status;
   }
 }

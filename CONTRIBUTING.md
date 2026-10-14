@@ -3,7 +3,7 @@
 The canonical repository is https://github.com/stepm65/GNSS-Caster.
 
 1. Start from an up-to-date `main` and create a branch for the change.
-2. Edit source files. The Python runtime is embedded in `gnss-caster-install-3.0.1.sh`; web source is in `frontend/src/` and `frontend/templates/`.
+2. Edit source files. The Python runtime is embedded in `gnss-caster-install.sh`; web source is in `frontend/src/` and `frontend/templates/`.
 3. If the web source changes, run the locked frontend build and `python tools/embed_frontend.py`. Commit both the source and the updated installer.
 4. Run checks appropriate to the change, update `CHANGES.md` and describe behavior, verification and remaining limitations in a pull request.
 5. Merge after review and passing checks. Deploy to operating equipment separately, with an appropriate maintenance window and backup.
@@ -17,7 +17,7 @@ Do not commit SSH credentials, environment files, access tokens, databases, rece
 ```sh
 python -m pip install -r requirements-dev.txt
 python -m unittest discover -s tests -v
-bash -n gnss-caster-install-3.0.1.sh
+bash -n gnss-caster-install.sh
 cd frontend
 pnpm install --frozen-lockfile
 pnpm run build

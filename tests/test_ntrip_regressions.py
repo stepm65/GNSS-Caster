@@ -22,7 +22,7 @@ from unittest.mock import patch
 import uuid
 
 
-SOURCE = (Path(__file__).resolve().parents[1] / 'gnss-caster-install-3.0.1.sh').read_text(encoding='utf-8')
+SOURCE = (Path(__file__).resolve().parents[1] / 'gnss-caster-install.sh').read_text(encoding='utf-8')
 
 
 def embedded_class(module, name, namespace):
