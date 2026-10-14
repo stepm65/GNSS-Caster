@@ -1,3 +1,4 @@
+import { t, getLocale } from "./i18n";
 import React, { useState } from "react";
 import {
   Alert,
@@ -27,19 +28,20 @@ import {
 } from "@mui/material";
 import { api } from "./api";
 import { useAction, useUnsavedChanges } from "./hooks";
-
 export const label = (value) =>
-  String(value)
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  t(
+    String(value)
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase()),
+  );
 export const date = (value) =>
   value
-    ? new Date(
-        typeof value === "number" ? value * 1000 : value,
-      ).toLocaleString()
+    ? new Date(typeof value === "number" ? value * 1000 : value).toLocaleString(
+        getLocale(),
+      )
     : "—";
 export const number = (value) =>
-  value == null ? "—" : Number(value).toLocaleString();
+  value == null ? "—" : Number(value).toLocaleString(getLocale());
 export const bytes = (value) =>
   value == null
     ? "—"
@@ -53,7 +55,6 @@ export const bytes = (value) =>
 export const bool = (value) =>
   value === true ||
   ["true", "1", "yes", "on"].includes(String(value).toLowerCase());
-
 export function Status({ value, text }) {
   const key = String(value ?? "unknown").toLowerCase();
   const color = [
@@ -79,18 +80,23 @@ export function Status({ value, text }) {
       size="small"
       color={color}
       variant="outlined"
-      label={text || label(key)}
+      label={t(text) || label(key)}
     />
   );
 }
 export function Notice({ value }) {
   return (
     value && (
-      <Alert sx={{ mb: 2 }} severity={value.severity || "error"}>
-        {value.text || value.message}
+      <Alert
+        sx={{
+          mb: 2,
+        }}
+        severity={value.severity || "error"}
+      >
+        {t(value.text || value.message)}
         {value.status === 401 && (
           <Button href="/login" size="small">
-            Sign in
+            {t("Sign in")}
           </Button>
         )}
       </Alert>
@@ -100,13 +106,19 @@ export function Notice({ value }) {
 export function ResourceState({ resource }) {
   return (
     <>
-      {resource.loading && <LinearProgress sx={{ mb: 2 }} />}
+      {resource.loading && (
+        <LinearProgress
+          sx={{
+            mb: 2,
+          }}
+        />
+      )}
       {resource.error && (
         <Notice
           value={{
             text:
-              resource.error.message +
-              (resource.data ? " Displaying the last received data." : ""),
+              t(resource.error.message) +
+              (resource.data ? t(" Displaying the last received data.") : ""),
             status: resource.error.status,
           }}
         />
@@ -122,22 +134,35 @@ export function PageTitle({
 }) {
   return (
     <Stack
-      direction={{ xs: "column", sm: "row" }}
+      direction={{
+        xs: "column",
+        sm: "row",
+      }}
       justifyContent="space-between"
-      alignItems={{ xs: "stretch", sm: "center" }}
+      alignItems={{
+        xs: "stretch",
+        sm: "center",
+      }}
       spacing={2}
-      sx={{ mb: 3.5 }}
+      sx={{
+        mb: 3.5,
+      }}
     >
       <Box>
         <Typography variant="overline" color="primary">
-          {eyebrow}
+          {t(eyebrow)}
         </Typography>
         <Typography variant="h4" component="h1">
           {title}
         </Typography>
         {description && (
-          <Typography color="text.secondary" sx={{ mt: 0.7 }}>
-            {description}
+          <Typography
+            color="text.secondary"
+            sx={{
+              mt: 0.7,
+            }}
+          >
+            {t(description)}
           </Typography>
         )}
       </Box>
@@ -147,20 +172,31 @@ export function PageTitle({
 }
 export function Panel({ title, caption, action, children, sx }) {
   return (
-    <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 }, ...sx }}>
+    <Paper
+      variant="outlined"
+      sx={{
+        p: {
+          xs: 2,
+          md: 3,
+        },
+        ...sx,
+      }}
+    >
       {title && (
         <Stack
           direction="row"
           alignItems="center"
           justifyContent="space-between"
           spacing={2}
-          sx={{ mb: 2 }}
+          sx={{
+            mb: 2,
+          }}
         >
           <Box>
-            <Typography variant="h6">{title}</Typography>
+            <Typography variant="h6">{t(title)}</Typography>
             {caption && (
               <Typography variant="body2" color="text.secondary">
-                {caption}
+                {t(caption)}
               </Typography>
             )}
           </Box>
@@ -176,7 +212,7 @@ export function Metric({ label: name, value, caption, icon }) {
     <Panel>
       <Stack direction="row" justifyContent="space-between">
         <Typography variant="body2" color="text.secondary">
-          {name}
+          {t(name)}
         </Typography>
         <Box color="primary.main">{icon}</Box>
       </Stack>
@@ -191,10 +227,10 @@ export function Metric({ label: name, value, caption, icon }) {
           },
         }}
       >
-        {value ?? "—"}
+        {t(value) ?? "—"}
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        {caption}
+        {t(caption)}
       </Typography>
     </Panel>
   );
@@ -220,15 +256,24 @@ export function Empty({
   text = "New items will appear here.",
 }) {
   return (
-    <Box sx={{ py: 5, textAlign: "center" }}>
-      <Typography variant="h6">{title}</Typography>
-      <Typography color="text.secondary" sx={{ mt: 1 }}>
-        {text}
+    <Box
+      sx={{
+        py: 5,
+        textAlign: "center",
+      }}
+    >
+      <Typography variant="h6">{t(title)}</Typography>
+      <Typography
+        color="text.secondary"
+        sx={{
+          mt: 1,
+        }}
+      >
+        {t(text)}
       </Typography>
     </Box>
   );
 }
-
 export function DataTable({
   rows = [],
   columns,
@@ -249,10 +294,10 @@ export function DataTable({
             <TableRow>
               {columns.map((col) => (
                 <TableCell key={col.key}>
-                  {col.label || label(col.key)}
+                  {t(col.label) || label(col.key)}
                 </TableCell>
               ))}
-              {actions && <TableCell align="right">Actions</TableCell>}
+              {actions && <TableCell align="right">{t("Actions")}</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -283,7 +328,7 @@ export function DataTable({
           </TableBody>
         </Table>
       </TableContainer>
-      {!rows.length && <Empty title={empty || "No records"} />}
+      {!rows.length && <Empty title={empty || t("No records")} />}
       {rows.length > pageSize && (
         <TablePagination
           component="div"
@@ -297,20 +342,27 @@ export function DataTable({
     </>
   );
 }
-
 export function Fields({ schema, value, onChange, disabled }) {
   return (
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0,1fr))" },
+        gridTemplateColumns: {
+          xs: "1fr",
+          sm: "repeat(2, minmax(0,1fr))",
+        },
         gap: 2.5,
       }}
     >
       {schema
         .filter((f) => !f.when || f.when(value))
         .map((f) => (
-          <Box key={f.key} sx={{ gridColumn: f.wide ? "1 / -1" : undefined }}>
+          <Box
+            key={f.key}
+            sx={{
+              gridColumn: f.wide ? "1 / -1" : undefined,
+            }}
+          >
             {f.type === "boolean" ? (
               <FormControlLabel
                 control={
@@ -318,16 +370,19 @@ export function Fields({ schema, value, onChange, disabled }) {
                     checked={bool(value[f.key])}
                     disabled={disabled || f.disabled}
                     onChange={(e) =>
-                      onChange({ ...value, [f.key]: e.target.checked })
+                      onChange({
+                        ...value,
+                        [f.key]: e.target.checked,
+                      })
                     }
                   />
                 }
-                label={f.label || label(f.key)}
+                label={t(f.label) || label(f.key)}
               />
             ) : (
               <TextField
                 fullWidth
-                label={f.label || label(f.key)}
+                label={t(f.label) || label(f.key)}
                 name={f.key}
                 value={value[f.key] ?? ""}
                 disabled={disabled || f.disabled}
@@ -351,7 +406,7 @@ export function Fields({ schema, value, onChange, disabled }) {
                 multiline={f.type === "multiline"}
                 minRows={f.type === "multiline" ? 3 : undefined}
                 required={f.required}
-                helperText={f.help}
+                helperText={t(f.help)}
                 autoComplete={
                   f.type === "password" ? "new-password" : undefined
                 }
@@ -369,7 +424,9 @@ export function Fields({ schema, value, onChange, disabled }) {
                     key={option.value ?? option}
                     value={option.value ?? option}
                   >
-                    {option.label ?? label(option)}
+                    {option.literal
+                      ? option.label
+                      : (t(option.label) ?? label(option))}
                   </MenuItem>
                 ))}
               </TextField>
@@ -408,7 +465,7 @@ export function FormDialog({
           action.run(() => onSubmit(value), onClose);
         }}
       >
-        <DialogTitle>{title}</DialogTitle>
+        <DialogTitle>{t(title)}</DialogTitle>
         <DialogContent dividers>
           <Notice value={action.notice} />
           {children}
@@ -421,10 +478,10 @@ export function FormDialog({
         </DialogContent>
         <DialogActions>
           <Button disabled={action.busy} onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" variant="contained" disabled={action.busy}>
-            {action.busy ? "Saving…" : submitLabel}
+            {action.busy ? t("Saving\u2026") : t(submitLabel)}
           </Button>
         </DialogActions>
       </Box>
@@ -450,27 +507,35 @@ export function Confirm({
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle>{t(title)}</DialogTitle>
       <DialogContent>
         <Notice value={action.notice} />
-        <Typography sx={{ mb: 2 }}>{description}</Typography>
+        <Typography
+          sx={{
+            mb: 2,
+          }}
+        >
+          {t(description)}
+        </Typography>
         {children}
         {password && (
           <TextField
             fullWidth
             type="password"
-            label="Backup passphrase"
+            label={t("Backup passphrase")}
             value={passphrase}
             onChange={(e) => setPassphrase(e.target.value)}
-            helperText="Leave blank to use the stored passphrase."
-            sx={{ mb: 2 }}
+            helperText={t("Leave blank to use the stored passphrase.")}
+            sx={{
+              mb: 2,
+            }}
           />
         )}
         {word && (
           <TextField
             autoFocus
             fullWidth
-            label={`Type ${word} to confirm`}
+            label={t("Type {0} to confirm", [word])}
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
           />
@@ -478,7 +543,7 @@ export function Confirm({
       </DialogContent>
       <DialogActions>
         <Button disabled={action.busy} onClick={onClose}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           variant="contained"
@@ -486,7 +551,7 @@ export function Confirm({
           disabled={action.busy || (word && typed !== word)}
           onClick={() => action.run(() => onConfirm(passphrase), onClose)}
         >
-          {action.busy ? "Working…" : "Confirm"}
+          {action.busy ? t("Working\u2026") : t("Confirm")}
         </Button>
       </DialogActions>
     </Dialog>
@@ -494,7 +559,7 @@ export function Confirm({
 }
 function detailValue(value, key = "") {
   if (value == null) return "—";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "boolean") return value ? t("Yes") : t("No");
   if (key.endsWith("_bytes") && typeof value === "number") return bytes(value);
   if (Array.isArray(value))
     return value.map((item) => detailValue(item)).join(", ");
@@ -506,7 +571,12 @@ function detailValue(value, key = "") {
 }
 export function KeyValues({ data }) {
   return (
-    <Box component="dl" sx={{ m: 0 }}>
+    <Box
+      component="dl"
+      sx={{
+        m: 0,
+      }}
+    >
       {Object.entries(data || {}).map(([key, value]) => (
         <Box
           key={key}
@@ -525,7 +595,10 @@ export function KeyValues({ data }) {
           <Typography
             component="dd"
             variant="body2"
-            sx={{ m: 0, overflowWrap: "anywhere" }}
+            sx={{
+              m: 0,
+              overflowWrap: "anywhere",
+            }}
           >
             {detailValue(value, key)}
           </Typography>
@@ -534,7 +607,6 @@ export function KeyValues({ data }) {
     </Box>
   );
 }
-
 export function CrudPage({
   title,
   description,
@@ -559,20 +631,24 @@ export function CrudPage({
   return (
     <>
       <PageTitle
-        title={title}
-        description={description}
+        title={t(title)}
+        description={t(description)}
         action={
           canEdit && (
             <Button
               variant="contained"
-              onClick={() => setEditing({ ...defaults })}
+              onClick={() =>
+                setEditing({
+                  ...defaults,
+                })
+              }
             >
-              Add{" "}
-              {title === "Rovers"
-                ? "rover"
-                : title === "Mountpoints"
-                  ? "mountpoint"
-                  : "item"}
+              {t("Add")}{" "}
+              {base === "/api/rovers"
+                ? t("rover")
+                : base === "/api/mountpoints"
+                  ? t("mountpoint")
+                  : t("item")}
             </Button>
           )
         }
@@ -580,14 +656,20 @@ export function CrudPage({
       <ResourceState resource={resource} />
       {extra}
       <Panel>
-        <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          sx={{
+            mb: 2,
+          }}
+        >
           <TextField
             size="small"
-            label={`Search ${title.toLowerCase()}`}
+            label={t("Search {0}", [title.toLowerCase()])}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <Button onClick={resource.refresh}>Refresh</Button>
+          <Button onClick={resource.refresh}>{t("Refresh")}</Button>
         </Stack>
         <DataTable
           rows={rows}
@@ -596,15 +678,22 @@ export function CrudPage({
             canEdit
               ? (row) => (
                   <>
-                    <Button size="small" onClick={() => setEditing({ ...row })}>
-                      Edit
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        setEditing({
+                          ...row,
+                        })
+                      }
+                    >
+                      {t("Edit")}
                     </Button>
                     <Button
                       size="small"
                       color="error"
                       onClick={() => setDeleting(row)}
                     >
-                      Delete
+                      {t("Delete")}
                     </Button>
                   </>
                 )
@@ -614,7 +703,15 @@ export function CrudPage({
       </Panel>
       {editing && (
         <FormDialog
-          title={`${editing.id ? "Edit" : "Add"} ${title.toLowerCase().replace(/s$/, "")}`}
+          title={t(
+            editing.id
+              ? base === "/api/rovers"
+                ? "Edit rover"
+                : "Edit mountpoint"
+              : base === "/api/rovers"
+                ? "Add rover"
+                : "Add mountpoint",
+          )}
           schema={schema}
           initial={editing}
           onClose={() => setEditing(null)}
@@ -623,7 +720,10 @@ export function CrudPage({
               ? await customSave(value)
               : await api(
                   `${base}/${value.id ? value.id + "/update" : "create"}`,
-                  { method: value.id ? "PUT" : "POST", body: prepare(value) },
+                  {
+                    method: value.id ? "PUT" : "POST",
+                    body: prepare(value),
+                  },
                 );
             resource.refresh();
             return result;
@@ -632,8 +732,10 @@ export function CrudPage({
       )}
       {deleting && (
         <Confirm
-          title={`Delete ${deleting.name || deleting.username}?`}
-          description="This removes the saved configuration. This action cannot be undone."
+          title={t("Delete {0}?", [deleting.name || deleting.username])}
+          description={t(
+            "This removes the saved configuration. This action cannot be undone.",
+          )}
           onClose={() => setDeleting(null)}
           onConfirm={async () => {
             const result = await api(`${base}/${deleting.id}/delete`, {

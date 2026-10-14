@@ -14,7 +14,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = (ROOT / 'gnss-caster-install-3.0.1.sh').read_text(encoding='utf-8')
+SOURCE = (ROOT / 'gnss-caster-install.sh').read_text(encoding='utf-8')
 FACTORY = SOURCE.split("cat > $APP/web/factory.py << 'EOF'\n", 1)[1].split('\nEOF', 1)[0]
 TEMPLATES = dict(re.findall(r"cat > \$APP/web/templates/([^\n]+) << 'EOF'\n(.*?)\nEOF\n", SOURCE, re.S))
 EMBEDDED = SOURCE.split("<< 'PYTHON_REACT_ASSETS'\n", 1)[1].split('\nPYTHON_REACT_ASSETS', 1)[0]

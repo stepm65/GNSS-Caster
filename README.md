@@ -1,8 +1,8 @@
 # GNSS Caster
 
-NTRIP caster and receiver management for Raspberry Pi and Linux, with an English React + Material UI web cabinet.
+NTRIP caster and receiver management for Raspberry Pi and Linux, with an English/Russian React + Material UI web cabinet.
 
-**Current version: 3.1.0.** This version has passed local automated checks. Deployment of the new web cabinet on the reference Raspberry Pi and validation with a live receiver remain pending. See [validation results](validation/ui/REPORT.md).
+**Current version: 3.2.0.** This version has passed local automated checks. Deployment of the new web cabinet on the reference Raspberry Pi and validation with a live receiver remain pending. See [validation results](validation/ui/REPORT.md).
 
 ![GNSS Caster overview with sample data](validation/ui/overview-desktop.png)
 
@@ -14,7 +14,7 @@ NTRIP caster and receiver management for Raspberry Pi and Linux, with an English
 - Separate overview, diagnostics and event-log pages.
 - Backup creation, file upload, verification, download and explicitly confirmed restore, including encrypted archives.
 - Accounts, roles, two-factor authentication and API tokens.
-- Telegram notifications, light/dark themes and a responsive web interface.
+- English/Russian interface, Telegram bot with its own language setting, light/dark themes and a responsive layout.
 - A standalone installer with pinned Python dependencies, systemd/nginx configuration and rollback support for maintenance operations.
 
 ## Install or update
@@ -24,25 +24,32 @@ The target is Linux with systemd and Python 3.11+: Raspberry Pi OS, Debian, or U
 ```sh
 git clone https://github.com/stepm65/GNSS-Caster.git
 cd GNSS-Caster
-bash ./gnss-caster-install-3.0.1.sh --version
-bash ./gnss-caster-install-3.0.1.sh --help
+bash ./gnss-caster-install.sh --version
+bash ./gnss-caster-install.sh --help
 ```
 
-The filename is retained for compatibility; `--version` reports the actual release.
+Since 3.2.0 the installer has the permanent name `gnss-caster-install.sh`.
+The previous `gnss-caster-install-3.0.1.sh` name was historical and no longer matched the release inside it. Update saved download links or commands that use that name; `--version` reports the actual release.
 
 For a new installation:
 
 ```sh
-sudo bash ./gnss-caster-install-3.0.1.sh install
+sudo bash ./gnss-caster-install.sh install
 ```
 
 For an existing installation, first make a current backup and schedule downtime outside field work, then use:
 
 ```sh
-sudo bash ./gnss-caster-install-3.0.1.sh --repair
+sudo bash ./gnss-caster-install.sh --repair
 ```
 
 Maintenance stops the caster while it runs. Review the [repair validation plan](REPAIR_TEST_PLAN.md) before updating an operational installation. The installer already contains the built web files; Node.js and a CDN connection are not required on the Raspberry Pi.
+
+## Languages
+
+Choose **English** or **Русский** in the header or on the sign-in page. The browser remembers this choice; switching languages keeps unsaved form values. Dates, numbers and Material UI controls follow the selected language.
+
+The Telegram bot has an independent setting: **System settings → Notifications → Telegram bot language** (in Russian: **Системные настройки → Уведомления → Язык Telegram-бота**). Save notifications to apply it to subsequent bot replies, alerts and backup messages without restarting the service. Existing installations default to English. Command names such as `/status`, receiver commands, identifiers and raw technical logs remain unchanged.
 
 ## Local development
 
@@ -63,7 +70,7 @@ Run the server and installer checks with Python and Bash available:
 ```sh
 python -m pip install -r requirements-dev.txt
 python -m unittest discover -s tests -v
-bash -n gnss-caster-install-3.0.1.sh
+bash -n gnss-caster-install.sh
 ```
 
 GitHub Actions runs the Python tests, builds and packages the frontend, and runs API and browser tests. These checks do not replace validation with Linux services, Bluetooth hardware or a live rover.
@@ -78,7 +85,7 @@ GitHub Actions runs the Python tests, builds and packages the frontend, and runs
 - [Frontend source, build and preview](frontend/README.md)
 - [Dependency policy](DEPENDENCIES.md)
 - [Repair validation plan](REPAIR_TEST_PLAN.md)
-- [Version 3.1.0 validation](validation/ui/REPORT.md)
+- [Version 3.2.0 validation](validation/ui/REPORT.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 
 ## License

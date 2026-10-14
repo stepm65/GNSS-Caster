@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -40,16 +41,28 @@ import {
   label,
   number,
 } from "../components";
-
 const connectionFields = [
-  { key: "name", label: "Station name", required: true },
+  {
+    key: "name",
+    label: "Station name",
+    required: true,
+  },
   {
     key: "connection_type",
     label: "Connection",
     options: [
-      { value: "bluetooth", label: "Bluetooth Classic" },
-      { value: "ble", label: "Bluetooth LE" },
-      { value: "serial", label: "USB / serial" },
+      {
+        value: "bluetooth",
+        label: "Bluetooth Classic",
+      },
+      {
+        value: "ble",
+        label: "Bluetooth LE",
+      },
+      {
+        value: "serial",
+        label: "USB / serial",
+      },
     ],
   },
   {
@@ -74,7 +87,12 @@ const connectionFields = [
     when: (v) => v.connection_type === "serial",
     help: "Use /dev/serial/by-id/... when available.",
   },
-  { key: "baudrate", label: "Baud rate", type: "number", min: 1 },
+  {
+    key: "baudrate",
+    label: "Baud rate",
+    type: "number",
+    min: 1,
+  },
   {
     key: "receiver_brand",
     options: ["comnav", "unicore", "ublox", "generic_nmea"],
@@ -93,12 +111,21 @@ const connectionFields = [
   },
 ];
 const positionFields = [
-  { key: "operation_mode", options: ["base", "rover", "moving_base"] },
+  {
+    key: "operation_mode",
+    options: ["base", "rover", "moving_base"],
+  },
   {
     key: "position_mode",
     options: [
-      { value: "auto", label: "Survey in" },
-      { value: "manual", label: "Known position" },
+      {
+        value: "auto",
+        label: "Survey in",
+      },
+      {
+        value: "manual",
+        label: "Known position",
+      },
     ],
   },
   {
@@ -128,23 +155,61 @@ const positionFields = [
     min: -180,
     max: 180,
   },
-  { key: "manual_alt", label: "Altitude (m)", type: "number" },
-  { key: "antenna_height", label: "Antenna height (m)", type: "number" },
-  { key: "add_antenna_height", type: "boolean" },
-  { key: "antenna_type" },
-  { key: "antenna_serial" },
+  {
+    key: "manual_alt",
+    label: "Altitude (m)",
+    type: "number",
+  },
+  {
+    key: "antenna_height",
+    label: "Antenna height (m)",
+    type: "number",
+  },
+  {
+    key: "add_antenna_height",
+    type: "boolean",
+  },
+  {
+    key: "antenna_type",
+  },
+  {
+    key: "antenna_serial",
+  },
 ];
 const commandFields = [
-  { key: "data_bits", type: "number", min: 7, max: 8 },
-  { key: "stop_bits", type: "number", min: 1, max: 2 },
-  { key: "parity", options: ["N", "E", "O"] },
+  {
+    key: "data_bits",
+    type: "number",
+    min: 7,
+    max: 8,
+  },
+  {
+    key: "stop_bits",
+    type: "number",
+    min: 1,
+    max: 2,
+  },
+  {
+    key: "parity",
+    options: ["N", "E", "O"],
+  },
   {
     key: "command_strategy",
     options: ["generated", "overrides", "replace"],
     help: "Generated uses RTCM settings. Overrides appends custom commands. Replace uses custom commands.",
   },
-  { key: "startup_commands", type: "multiline", wide: true, maxLength: 4000 },
-  { key: "shutdown_commands", type: "multiline", wide: true, maxLength: 4000 },
+  {
+    key: "startup_commands",
+    type: "multiline",
+    wide: true,
+    maxLength: 4000,
+  },
+  {
+    key: "shutdown_commands",
+    type: "multiline",
+    wide: true,
+    maxLength: 4000,
+  },
 ];
 const defaults = {
   name: "",
@@ -181,16 +246,22 @@ export function stationPayload(value) {
   if (payload.connection_type !== "serial") delete payload.gnss_port;
   return payload;
 }
-
 function StationEditor({ station, onClose, onSaved }) {
-  const [value, setValue] = useState({ ...defaults, ...station }),
+  const [value, setValue] = useState({
+      ...defaults,
+      ...station,
+    }),
     [tab, setTab] = useState(0),
     [preview, setPreview] = useState(null),
     [ports, setPorts] = useState(null);
   const action = useAction();
   useUnsavedChanges(
     !action.busy &&
-      JSON.stringify(value) !== JSON.stringify({ ...defaults, ...station }),
+      JSON.stringify(value) !==
+        JSON.stringify({
+          ...defaults,
+          ...station,
+        }),
   );
   return (
     <Dialog
@@ -221,7 +292,7 @@ function StationEditor({ station, onClose, onSaved }) {
         }}
       >
         <DialogTitle>
-          {station.id ? "Edit base station" : "Add base station"}
+          {station.id ? t("Edit base station") : t("Add base station")}
         </DialogTitle>
         <DialogContent dividers>
           <Notice value={action.notice} />
@@ -230,15 +301,22 @@ function StationEditor({ station, onClose, onSaved }) {
             onChange={(_, v) => setTab(v)}
             variant="scrollable"
             allowScrollButtonsMobile
-            sx={{ mb: 3 }}
+            sx={{
+              mb: 3,
+            }}
           >
-            <Tab label="Connection" />
-            <Tab label="Position & antenna" />
-            <Tab label="Receiver commands" />
+            <Tab label={t("Connection")} />
+            <Tab label={t("Position & antenna")} />
+            <Tab label={t("Receiver commands")} />
           </Tabs>
           {[connectionFields, positionFields, commandFields].map(
             (schema, i) => (
-              <Box key={i} sx={{ display: tab === i ? "block" : "none" }}>
+              <Box
+                key={i}
+                sx={{
+                  display: tab === i ? "block" : "none",
+                }}
+              >
                 <Fields
                   schema={schema}
                   value={value}
@@ -249,7 +327,11 @@ function StationEditor({ station, onClose, onSaved }) {
             ),
           )}
           {tab === 0 && value.connection_type === "serial" && (
-            <Box sx={{ mt: 2 }}>
+            <Box
+              sx={{
+                mt: 2,
+              }}
+            >
               <Button
                 disabled={action.busy}
                 onClick={() =>
@@ -259,13 +341,16 @@ function StationEditor({ station, onClose, onSaved }) {
                   )
                 }
               >
-                Find serial ports
+                {t("Find serial ports")}
               </Button>
               {ports?.map((p) => (
                 <Button
                   key={p.device}
                   onClick={() =>
-                    setValue({ ...value, gnss_port: p.by_id || p.device })
+                    setValue({
+                      ...value,
+                      gnss_port: p.by_id || p.device,
+                    })
                   }
                 >
                   {p.label} · {p.device}
@@ -274,7 +359,11 @@ function StationEditor({ station, onClose, onSaved }) {
             </Box>
           )}
           {tab === 2 && (
-            <Box sx={{ mt: 2 }}>
+            <Box
+              sx={{
+                mt: 2,
+              }}
+            >
               <Button
                 disabled={action.busy}
                 onClick={() =>
@@ -288,20 +377,25 @@ function StationEditor({ station, onClose, onSaved }) {
                   )
                 }
               >
-                Preview generated commands
+                {t("Preview generated commands")}
               </Button>
               {preview && (
                 <>
-                  <Alert severity="info" sx={{ my: 2 }}>
+                  <Alert
+                    severity="info"
+                    sx={{
+                      my: 2,
+                    }}
+                  >
                     {preview.message}
                   </Alert>
-                  <Typography variant="subtitle2">Startup</Typography>
+                  <Typography variant="subtitle2">{t("Startup")}</Typography>
                   <Code>
-                    {preview.effective_startup_commands || "No commands"}
+                    {preview.effective_startup_commands || t("No commands")}
                   </Code>
-                  <Typography variant="subtitle2">Shutdown</Typography>
+                  <Typography variant="subtitle2">{t("Shutdown")}</Typography>
                   <Code>
-                    {preview.effective_shutdown_commands || "No commands"}
+                    {preview.effective_shutdown_commands || t("No commands")}
                   </Code>
                 </>
               )}
@@ -310,18 +404,22 @@ function StationEditor({ station, onClose, onSaved }) {
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ display: "block", mt: 3 }}
+            sx={{
+              display: "block",
+              mt: 3,
+            }}
           >
-            Save stores the configuration. Use Apply configuration on the
-            station page to send it to the receiver.
+            {t(
+              "Save stores the configuration. Use Apply configuration on the station page to send it to the receiver.",
+            )}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} disabled={action.busy}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" disabled={action.busy} variant="contained">
-            {action.busy ? "Saving…" : "Save station"}
+            {action.busy ? t("Saving\u2026") : t("Save station")}
           </Button>
         </DialogActions>
       </Box>
@@ -347,41 +445,53 @@ function Code({ children }) {
     </Box>
   );
 }
-
 function Scanner({ onAdd, onUpdated }) {
   const action = useAction(),
     [devices, setDevices] = useState(null),
     [confirm, setConfirm] = useState(null);
   return (
     <Panel
-      title="Nearby Bluetooth devices"
-      caption="Discovery runs only when you request a scan."
-      sx={{ mb: 3 }}
+      title={t("Nearby Bluetooth devices")}
+      caption={t("Discovery runs only when you request a scan.")}
+      sx={{
+        mb: 3,
+      }}
       action={
         <Button
           startIcon={<BluetoothSearching />}
           disabled={action.busy}
           onClick={() =>
             action.run(
-              () => api("/api/bluetooth/scan", { timeout: 45000 }),
+              () =>
+                api("/api/bluetooth/scan", {
+                  timeout: 45000,
+                }),
               setDevices,
             )
           }
         >
-          {action.busy ? "Working…" : "Scan nearby"}
+          {action.busy ? t("Working\u2026") : t("Scan nearby")}
         </Button>
       }
     >
       <Notice value={action.notice} />
       {devices && (
         <DataTable
-          rows={devices.map((d) => ({ ...d, id: d.mac }))}
+          rows={devices.map((d) => ({
+            ...d,
+            id: d.mac,
+          }))}
           columns={[
-            { key: "name" },
-            { key: "mac", label: "Address" },
+            {
+              key: "name",
+            },
+            {
+              key: "mac",
+              label: t("Address"),
+            },
             {
               key: "rssi",
-              label: "Signal",
+              label: t("Signal"),
               render: (d) => (d.rssi == null ? "—" : `${d.rssi} dBm`),
             },
             {
@@ -399,38 +509,52 @@ function Scanner({ onAdd, onUpdated }) {
                     () =>
                       api("/api/bluetooth/connect", {
                         method: "POST",
-                        body: { mac: d.mac },
+                        body: {
+                          mac: d.mac,
+                        },
                         timeout: 45000,
                       }),
                     onUpdated,
                   )
                 }
               >
-                Connect
+                {t("Connect")}
               </Button>
               {!d.is_registered && (
                 <Button
                   size="small"
                   onClick={() =>
-                    onAdd({ ...defaults, name: d.name || "", bt_mac: d.mac })
+                    onAdd({
+                      ...defaults,
+                      name: d.name || "",
+                      bt_mac: d.mac,
+                    })
                   }
                 >
-                  Add
+                  {t("Add")}
                 </Button>
               )}
               <Button
                 size="small"
                 onClick={() =>
-                  setConfirm({ device: d, type: d.paired ? "unpair" : "pair" })
+                  setConfirm({
+                    device: d,
+                    type: d.paired ? "unpair" : "pair",
+                  })
                 }
               >
-                {d.paired ? "Unpair" : "Pair"}
+                {d.paired ? t("Unpair") : t("Pair")}
               </Button>
               <Button
                 size="small"
-                onClick={() => setConfirm({ device: d, type: "disconnect" })}
+                onClick={() =>
+                  setConfirm({
+                    device: d,
+                    type: "disconnect",
+                  })
+                }
               >
-                Disconnect
+                {t("Disconnect")}
               </Button>
               <Button
                 size="small"
@@ -439,13 +563,16 @@ function Scanner({ onAdd, onUpdated }) {
                   action.run(() =>
                     api("/api/bluetooth/test", {
                       method: "POST",
-                      body: { mac: d.mac, channel: 1 },
+                      body: {
+                        mac: d.mac,
+                        channel: 1,
+                      },
                       timeout: 45000,
                     }),
                   )
                 }
               >
-                Test
+                {t("Test")}
               </Button>
             </>
           )}
@@ -454,16 +581,23 @@ function Scanner({ onAdd, onUpdated }) {
       {confirm && (
         <Confirm
           title={`${label(confirm.type)} ${confirm.device.name || confirm.device.mac}?`}
-          description="Changing the Bluetooth connection may interrupt corrections from this receiver."
+          description={t(
+            "Changing the Bluetooth connection may interrupt corrections from this receiver.",
+          )}
           onClose={() => setConfirm(null)}
           onConfirm={async () => {
             const r = await api(`/api/bluetooth/${confirm.type}`, {
               method: "POST",
-              body: { mac: confirm.device.mac },
+              body: {
+                mac: confirm.device.mac,
+              },
               timeout: 45000,
             });
             onUpdated();
-            action.setNotice({ severity: "info", text: r.message });
+            action.setNotice({
+              severity: "info",
+              text: r.message,
+            });
             return r;
           }}
         />
@@ -495,20 +629,20 @@ function StationList() {
   return (
     <>
       <PageTitle
-        title="Base stations"
-        description="Receivers that supply your correction streams."
+        title={t("Base stations")}
+        description={t("Receivers that supply your correction streams.")}
         action={
           canEdit && (
             <Stack direction="row" spacing={1}>
               <Button variant="outlined" onClick={() => setScanning(!scanning)}>
-                Bluetooth devices
+                {t("Bluetooth devices")}
               </Button>
               <Button
                 variant="contained"
                 startIcon={<Add />}
                 onClick={() => setEditor(defaults)}
               >
-                Add station
+                {t("Add station")}
               </Button>
             </Stack>
           )
@@ -519,19 +653,30 @@ function StationList() {
       <Notice value={action.notice} />
       {scanning && <Scanner onAdd={setEditor} onUpdated={refresh} />}
       <Panel>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{
+            mb: 2,
+          }}
+        >
           <TextField
-            label="Search stations"
+            label={t("Search stations")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            sx={{ flex: 1, maxWidth: 350 }}
+            sx={{
+              flex: 1,
+              maxWidth: 350,
+            }}
           />
           {canEdit && selected.length > 0 && (
             <Button color="error" onClick={() => setDeleting(selected)}>
-              Delete selected ({selected.length})
+              {t("Delete selected (")}
+              {selected.length})
             </Button>
           )}
-          <Button onClick={refresh}>Refresh</Button>
+          <Button onClick={refresh}>{t("Refresh")}</Button>
         </Stack>
         <DataTable
           rows={rows}
@@ -543,7 +688,9 @@ function StationList() {
                     label: "",
                     render: (s) => (
                       <Checkbox
-                        inputProps={{ "aria-label": `Select ${s.name}` }}
+                        inputProps={{
+                          "aria-label": t("Select {0}", [s.name]),
+                        }}
                         checked={selected.includes(s.id)}
                         onChange={(e) =>
                           setSelected(
@@ -559,21 +706,26 @@ function StationList() {
               : []),
             {
               key: "name",
-              label: "Station",
+              label: t("Station"),
               render: (s) => (
-                <Button href={`/base_stations/${s.id}`} sx={{ px: 0 }}>
+                <Button
+                  href={`/base_stations/${s.id}`}
+                  sx={{
+                    px: 0,
+                  }}
+                >
                   {s.name}
                 </Button>
               ),
             },
             {
               key: "connection_type",
-              label: "Connection",
+              label: t("Connection"),
               render: (s) => label(s.connection_type),
             },
             {
               key: "bt_mac",
-              label: "Address / port",
+              label: t("Address / port"),
               render: (s) =>
                 s.connection_type === "serial" ? s.gnss_port : s.bt_mac,
             },
@@ -594,7 +746,7 @@ function StationList() {
             },
             {
               key: "bytes_received",
-              label: "Received",
+              label: t("Received"),
               render: (s) => bytes(s.bytes_received),
             },
           ]}
@@ -603,7 +755,7 @@ function StationList() {
               ? (s) => (
                   <>
                     <Button size="small" onClick={() => setEditor(s)}>
-                      Edit
+                      {t("Edit")}
                     </Button>
                     {s.connection_type !== "serial" && (
                       <Button
@@ -614,14 +766,16 @@ function StationList() {
                             () =>
                               api("/api/bluetooth/connect", {
                                 method: "POST",
-                                body: { mac: s.bt_mac },
+                                body: {
+                                  mac: s.bt_mac,
+                                },
                                 timeout: 45000,
                               }),
                             refresh,
                           )
                         }
                       >
-                        Connect
+                        {t("Connect")}
                       </Button>
                     )}
                     <Button
@@ -629,7 +783,7 @@ function StationList() {
                       color="error"
                       onClick={() => setDeleting([s.id])}
                     >
-                      Delete
+                      {t("Delete")}
                     </Button>
                   </>
                 )
@@ -646,8 +800,10 @@ function StationList() {
       )}
       {deleting && (
         <Confirm
-          title={`Delete ${deleting.length} station(s)?`}
-          description="This removes the station configuration and may affect its mountpoints. Active field work may be interrupted."
+          title={t("Delete {0} station(s)?", [deleting.length])}
+          description={t(
+            "This removes the station configuration and may affect its mountpoints. Active field work may be interrupted.",
+          )}
           onClose={() => setDeleting(null)}
           onConfirm={async () => {
             const r =
@@ -657,7 +813,9 @@ function StationList() {
                   })
                 : await api("/api/base_stations/bulk_delete", {
                     method: "POST",
-                    body: { ids: deleting },
+                    body: {
+                      ids: deleting,
+                    },
                   });
             setSelected([]);
             refresh();
@@ -668,7 +826,6 @@ function StationList() {
     </>
   );
 }
-
 function StationDetail({ id }) {
   const { canEdit } = useContext(Session),
     resource = useResource("/api/base_stations"),
@@ -691,15 +848,21 @@ function StationDetail({ id }) {
   };
   return (
     <>
-      <Button startIcon={<ArrowBack />} href="/base_stations" sx={{ mb: 2 }}>
-        All base stations
+      <Button
+        startIcon={<ArrowBack />}
+        href="/base_stations"
+        sx={{
+          mb: 2,
+        }}
+      >
+        {t("All base stations")}
       </Button>
       <PageTitle
-        title={station?.name || "Base station"}
+        title={station?.name || t("Base station")}
         description={
           station
             ? `${label(station.connection_type)} · ${station.bt_mac || station.gnss_port}`
-            : "Loading receiver information…"
+            : t("Loading receiver information\u2026")
         }
         action={
           canEdit && (
@@ -709,22 +872,23 @@ function StationDetail({ id }) {
                 disabled={!station}
                 onClick={() => setEditor(true)}
               >
-                Edit station
+                {t("Edit station")}
               </Button>
               <Button
                 variant="contained"
                 disabled={!current?.connected || action.busy}
                 onClick={() =>
                   setConfirm({
-                    title: "Apply receiver configuration?",
-                    description:
+                    title: t("Apply receiver configuration?"),
+                    description: t(
                       "This sends the saved configuration to the receiver. Its correction output may briefly change.",
+                    ),
                     url: `/api/base_stations/${id}/apply_config`,
                     body: {},
                   })
                 }
               >
-                Apply configuration
+                {t("Apply configuration")}
               </Button>
             </Stack>
           )
@@ -736,7 +900,7 @@ function StationDetail({ id }) {
       <Notice value={action.notice} />
       <GridBox columns={4}>
         <Metric
-          label="Receiver"
+          label={t("Receiver")}
           value={
             live.error
               ? "Unknown"
@@ -744,10 +908,10 @@ function StationDetail({ id }) {
                 ? "Connected"
                 : "Offline"
           }
-          caption={check?.message || "Waiting for receiver data"}
+          caption={check?.message || t("Waiting for receiver data")}
         />
         <Metric
-          label="Corrections"
+          label={t("Corrections")}
           value={
             health.error
               ? "Unknown"
@@ -757,19 +921,19 @@ function StationDetail({ id }) {
           }
           caption={
             check?.last_frame_age_seconds != null
-              ? `Last frame ${check.last_frame_age_seconds} s ago`
-              : "No valid frame received"
+              ? t("Last frame {0} s ago", [check.last_frame_age_seconds])
+              : t("No valid frame received")
           }
         />
         <Metric
-          label="Satellites"
+          label={t("Satellites")}
           value={telemetry.satellites_used}
-          caption={`${telemetry.satellites_visible ?? "—"} visible`}
+          caption={t("{0} visible", [telemetry.satellites_visible ?? "—"])}
         />
         <Metric
-          label="Rover clients"
+          label={t("Rover clients")}
           value={current?.rover_clients}
-          caption={`${bytes(current?.bytes_received)} received`}
+          caption={t("{0} received", [bytes(current?.bytes_received)])}
         />
       </GridBox>
       <Tabs
@@ -777,21 +941,23 @@ function StationDetail({ id }) {
         onChange={(_, v) => setTab(v)}
         variant="scrollable"
         allowScrollButtonsMobile
-        sx={{ my: 3 }}
+        sx={{
+          my: 3,
+        }}
       >
-        <Tab label="Telemetry" />
-        <Tab label="Position & site points" />
-        <Tab label="Receiver console" />
-        <Tab label="Command history" />
-        <Tab label="Config versions" />
+        <Tab label={t("Telemetry")} />
+        <Tab label={t("Position & site points")} />
+        <Tab label={t("Receiver console")} />
+        <Tab label={t("Command history")} />
+        <Tab label={t("Config versions")} />
       </Tabs>
       {tab === 0 && (
         <GridBox>
-          <Panel title="GNSS telemetry">
+          <Panel title={t("GNSS telemetry")}>
             <KeyValues data={telemetry} />
           </Panel>
           <Stack spacing={2.5}>
-            <Panel title="Receiver details">
+            <Panel title={t("Receiver details")}>
               <KeyValues
                 data={{
                   brand: station?.receiver_brand,
@@ -804,7 +970,7 @@ function StationDetail({ id }) {
                 }}
               />
             </Panel>
-            <Panel title="RTCM stream">
+            <Panel title={t("RTCM stream")}>
               <KeyValues data={stream} />
             </Panel>
           </Stack>
@@ -838,17 +1004,32 @@ function StationDetail({ id }) {
         />
       )}
       {result && (
-        <Panel title="Configuration result" sx={{ mt: 3 }}>
+        <Panel
+          title={t("Configuration result")}
+          sx={{
+            mt: 3,
+          }}
+        >
           <Alert severity={result.success ? "success" : "warning"}>
             {result.message}
           </Alert>
-          <KeyValues data={{ sent_count: result.sent_count }} />
+          <KeyValues
+            data={{
+              sent_count: result.sent_count,
+            }}
+          />
           <DataTable
             rows={result.results || []}
             columns={[
-              { key: "command" },
-              { key: "status" },
-              { key: "response" },
+              {
+                key: "command",
+              },
+              {
+                key: "status",
+              },
+              {
+                key: "response",
+              },
             ]}
           />
         </Panel>
@@ -884,7 +1065,9 @@ function Console({ id, canEdit }) {
   }, [lines]);
   function download() {
     const url = URL.createObjectURL(
-      new Blob([lines.join("\n")], { type: "text/plain" }),
+      new Blob([lines.join("\n")], {
+        type: "text/plain",
+      }),
     );
     const a = document.createElement("a");
     a.href = url;
@@ -894,29 +1077,36 @@ function Console({ id, canEdit }) {
   }
   return (
     <Panel
-      title="Receiver console"
-      caption="Live receiver output. The console reads a shared buffer without consuming rover corrections."
+      title={t("Receiver console")}
+      caption={t(
+        "Live receiver output. The console reads a shared buffer without consuming rover corrections.",
+      )}
       action={
         <Stack direction="row">
           <Button onClick={() => setRunning(!running)}>
-            {running ? "Stop" : "Start"}
+            {running ? t("Stop") : t("Start")}
           </Button>
-          <Button onClick={() => setLines([])}>Clear</Button>
+          <Button onClick={() => setLines([])}>{t("Clear")}</Button>
           <Button disabled={!lines.length} onClick={download}>
-            Download
+            {t("Download")}
           </Button>
         </Stack>
       }
     >
       {error && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
+        <Alert
+          severity="warning"
+          sx={{
+            mb: 2,
+          }}
+        >
           {error}
         </Alert>
       )}
       <Box
         ref={output}
         component="pre"
-        aria-label="Receiver output"
+        aria-label={t("Receiver output")}
         sx={{
           height: 320,
           overflow: "auto",
@@ -931,12 +1121,12 @@ function Console({ id, canEdit }) {
       >
         {lines.length
           ? lines.join("\n")
-          : "Start the console to view receiver output."}
+          : t("Start the console to view receiver output.")}
       </Box>
       {canEdit && (
         <Stack direction="row" spacing={1.5}>
           <TextField
-            label="Receiver command"
+            label={t("Receiver command")}
             value={command}
             onChange={(e) => setCommand(e.target.value)}
             fullWidth
@@ -946,13 +1136,13 @@ function Console({ id, canEdit }) {
             variant="outlined"
             onClick={() => setConfirm(true)}
           >
-            Send
+            {t("Send")}
           </Button>
         </Stack>
       )}
       {confirm && (
         <Confirm
-          title="Send receiver command?"
+          title={t("Send receiver command?")}
           description={command}
           onClose={() => setConfirm(false)}
           onConfirm={async () => {
@@ -972,15 +1162,26 @@ function Console({ id, canEdit }) {
       )}
       {results && (
         <>
-          <Alert severity="info" sx={{ mt: 2 }}>
+          <Alert
+            severity="info"
+            sx={{
+              mt: 2,
+            }}
+          >
             {results.message}
           </Alert>
           <DataTable
             rows={results.results || []}
             columns={[
-              { key: "command" },
-              { key: "status" },
-              { key: "response" },
+              {
+                key: "command",
+              },
+              {
+                key: "status",
+              },
+              {
+                key: "response",
+              },
             ]}
           />
         </>
@@ -995,10 +1196,10 @@ function Commands({ id }) {
   );
   return (
     <Panel
-      title="Command history"
+      title={t("Command history")}
       action={
         <Button href={`/api/base_stations/${id}/command_log/export`}>
-          Export CSV
+          {t("Export CSV")}
         </Button>
       }
     >
@@ -1010,10 +1211,20 @@ function Commands({ id }) {
             : resource.data?.entries || resource.data?.items || []
         }
         columns={[
-          { key: "ts", label: "Time", render: (r) => date(r.ts) },
-          { key: "phase" },
-          { key: "command" },
-          { key: "response" },
+          {
+            key: "ts",
+            label: t("Time"),
+            render: (r) => date(r.ts),
+          },
+          {
+            key: "phase",
+          },
+          {
+            key: "command",
+          },
+          {
+            key: "response",
+          },
         ]}
       />
     </Panel>
@@ -1030,33 +1241,47 @@ function Versions({ id, onUpdated }) {
   );
   return (
     <Panel
-      title="Configuration versions"
-      caption="Restoring a version updates saved settings. Apply configuration separately to send them to the receiver."
-      action={<Button onClick={resource.refresh}>Refresh</Button>}
+      title={t("Configuration versions")}
+      caption={t(
+        "Restoring a version updates saved settings. Apply configuration separately to send them to the receiver.",
+      )}
+      action={<Button onClick={resource.refresh}>{t("Refresh")}</Button>}
     >
       <ResourceState resource={resource} />
       <DataTable
         rows={resource.data || []}
         columns={[
-          { key: "version" },
-          { key: "source" },
-          { key: "created_by", label: "Author" },
+          {
+            key: "version",
+          },
+          {
+            key: "source",
+          },
+          {
+            key: "created_by",
+            label: t("Author"),
+          },
           {
             key: "created_at",
-            label: "Saved",
+            label: t("Saved"),
             render: (r) => date(r.created_at),
           },
-          { key: "note" },
+          {
+            key: "note",
+          },
         ]}
         actions={(r) => (
           <Button size="small" onClick={() => setSelected(r)}>
-            View changes
+            {t("View changes")}
           </Button>
         )}
       />
       {selected && (
         <Dialog open maxWidth="md" fullWidth onClose={() => setSelected(null)}>
-          <DialogTitle>Version {selected.version}</DialogTitle>
+          <DialogTitle>
+            {t("Version ")}
+            {selected.version}
+          </DialogTitle>
           <DialogContent dividers>
             <ResourceState resource={detail} />
             <DataTable
@@ -1068,20 +1293,27 @@ function Versions({ id, onUpdated }) {
                   saved: String(v.version ?? ""),
                 }),
               )}
-              empty="No differences from the saved configuration"
+              empty={t("No differences from the saved configuration")}
               columns={[
-                { key: "field" },
-                { key: "current" },
-                { key: "saved", label: "This version" },
+                {
+                  key: "field",
+                },
+                {
+                  key: "current",
+                },
+                {
+                  key: "saved",
+                  label: t("This version"),
+                },
               ]}
             />
             <KeyValues data={detail.data?.config} />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setSelected(null)}>Close</Button>
+            <Button onClick={() => setSelected(null)}>{t("Close")}</Button>
             {canEdit && (
               <Button variant="contained" onClick={() => setRestore(true)}>
-                Restore version
+                {t("Restore version")}
               </Button>
             )}
           </DialogActions>
@@ -1089,13 +1321,15 @@ function Versions({ id, onUpdated }) {
       )}
       {restore && (
         <Confirm
-          title={`Restore version ${selected.version}?`}
-          description="This replaces the saved receiver configuration."
+          title={t("Restore version {0}?", [selected.version])}
+          description={t("This replaces the saved receiver configuration.")}
           onClose={() => setRestore(false)}
           onConfirm={async () => {
             const r = await api(
               `/api/base_stations/${id}/config_versions/${selected.id}/restore`,
-              { method: "POST" },
+              {
+                method: "POST",
+              },
             );
             resource.refresh();
             onUpdated();
@@ -1108,13 +1342,41 @@ function Versions({ id, onUpdated }) {
   );
 }
 const pointFields = [
-  { key: "name", required: true },
-  { key: "description" },
-  { key: "latitude", type: "number", required: true, min: -90, max: 90 },
-  { key: "longitude", type: "number", required: true, min: -180, max: 180 },
-  { key: "altitude", label: "Altitude (m)", type: "number" },
-  { key: "antenna_height", label: "Antenna height (m)", type: "number" },
-  { key: "add_antenna_height", type: "boolean" },
+  {
+    key: "name",
+    required: true,
+  },
+  {
+    key: "description",
+  },
+  {
+    key: "latitude",
+    type: "number",
+    required: true,
+    min: -90,
+    max: 90,
+  },
+  {
+    key: "longitude",
+    type: "number",
+    required: true,
+    min: -180,
+    max: 180,
+  },
+  {
+    key: "altitude",
+    label: "Altitude (m)",
+    type: "number",
+  },
+  {
+    key: "antenna_height",
+    label: "Antenna height (m)",
+    type: "number",
+  },
+  {
+    key: "add_antenna_height",
+    type: "boolean",
+  },
 ];
 function Position({ id, station, onUpdated }) {
   const { canEdit } = useContext(Session),
@@ -1132,19 +1394,25 @@ function Position({ id, station, onUpdated }) {
   return (
     <Stack spacing={3}>
       <Panel
-        title="Position stability"
-        caption={`Maximum offset: ${history.data?.max_offset_m?.toFixed(3) ?? "—"} m · Mean offset: ${history.data?.mean_offset_m?.toFixed(3) ?? "—"} m`}
+        title={t("Position stability")}
+        caption={t("Maximum offset: {0} m \xB7 Mean offset: {1} m", [
+          history.data?.max_offset_m?.toFixed(3) ?? "—",
+          history.data?.mean_offset_m?.toFixed(3) ?? "—",
+        ])}
         action={
           <TextField
             select
-            label="Period"
+            label={t("Period")}
             value={hours}
             onChange={(e) => setHours(e.target.value)}
-            sx={{ minWidth: 130 }}
+            sx={{
+              minWidth: 130,
+            }}
           >
             {[1, 6, 24, 72, 168].map((h) => (
               <MenuItem key={h} value={h}>
-                {h} hours
+                {h}
+                {t(" hours")}
               </MenuItem>
             ))}
           </TextField>
@@ -1155,9 +1423,14 @@ function Position({ id, station, onUpdated }) {
           <Box
             component="svg"
             role="img"
-            aria-label="Position offset in metres over time"
+            aria-label={t("Position offset in metres over time")}
             viewBox="0 0 700 160"
-            sx={{ width: "100%", height: 160, color: "primary.main", my: 2 }}
+            sx={{
+              width: "100%",
+              height: 160,
+              color: "primary.main",
+              my: 2,
+            }}
           >
             <line
               x1="20"
@@ -1179,7 +1452,8 @@ function Position({ id, station, onUpdated }) {
                 .join(" ")}
             />
             <text x="20" y="14" fontSize="11" fill="currentColor">
-              {max.toFixed(3)} m
+              {max.toFixed(3)}
+              {t(" m")}
             </text>
             <text x="20" y="157" fontSize="10" fill="currentColor">
               {date(offsets[0].ts)}
@@ -1198,19 +1472,37 @@ function Position({ id, station, onUpdated }) {
         <DataTable
           rows={[...samples].reverse()}
           columns={[
-            { key: "ts", label: "Time", render: (s) => date(s.ts) },
-            { key: "latitude" },
-            { key: "longitude" },
-            { key: "altitude" },
-            { key: "offset_m", label: "Offset (m)" },
-            { key: "satellites" },
-            { key: "hdop", label: "HDOP" },
+            {
+              key: "ts",
+              label: t("Time"),
+              render: (s) => date(s.ts),
+            },
+            {
+              key: "latitude",
+            },
+            {
+              key: "longitude",
+            },
+            {
+              key: "altitude",
+            },
+            {
+              key: "offset_m",
+              label: t("Offset (m)"),
+            },
+            {
+              key: "satellites",
+            },
+            {
+              key: "hdop",
+              label: t("HDOP"),
+            },
           ]}
         />
       </Panel>
       <Panel
-        title="Saved site points"
-        caption="Known coordinates you can reuse for a base station."
+        title={t("Saved site points")}
+        caption={t("Known coordinates you can reuse for a base station.")}
         action={
           canEdit && (
             <Button
@@ -1225,7 +1517,7 @@ function Position({ id, station, onUpdated }) {
                 })
               }
             >
-              Save a point
+              {t("Save a point")}
             </Button>
           )
         }
@@ -1234,40 +1526,51 @@ function Position({ id, station, onUpdated }) {
         <DataTable
           rows={points.data || []}
           columns={[
-            { key: "name" },
-            { key: "latitude" },
-            { key: "longitude" },
-            { key: "altitude", label: "Altitude (m)" },
+            {
+              key: "name",
+            },
+            {
+              key: "latitude",
+            },
+            {
+              key: "longitude",
+            },
+            {
+              key: "altitude",
+              label: t("Altitude (m)"),
+            },
           ]}
           actions={
             canEdit
               ? (p) => (
                   <>
-                    <Button onClick={() => setEditor(p)}>Edit</Button>
+                    <Button onClick={() => setEditor(p)}>{t("Edit")}</Button>
                     <Button
                       onClick={() =>
                         setConfirm({
-                          title: `Use ${p.name}?`,
+                          title: t("Use {0}?", [p.name]),
                           url: `/api/site_points/${p.id}/apply/${id}`,
-                          description:
+                          description: t(
                             "Updates the saved base position. Apply configuration separately to send it to the receiver.",
+                          ),
                         })
                       }
                     >
-                      Use point
+                      {t("Use point")}
                     </Button>
                     <Button
                       color="error"
                       onClick={() =>
                         setConfirm({
-                          title: `Delete ${p.name}?`,
+                          title: t("Delete {0}?", [p.name]),
                           url: `/api/site_points/${p.id}/delete`,
-                          description:
+                          description: t(
                             "Removes this point from your saved coordinates.",
+                          ),
                         })
                       }
                     >
-                      Delete
+                      {t("Delete")}
                     </Button>
                   </>
                 )
@@ -1277,9 +1580,14 @@ function Position({ id, station, onUpdated }) {
       </Panel>
       {editor && (
         <FormDialog
-          title="Site point"
+          title={t("Site point")}
           schema={pointFields.map((f) =>
-            f.key === "name" && editor.id ? { ...f, disabled: true } : f,
+            f.key === "name" && editor.id
+              ? {
+                  ...f,
+                  disabled: true,
+                }
+              : f,
           )}
           initial={editor}
           onClose={() => setEditor(null)}
@@ -1298,7 +1606,9 @@ function Position({ id, station, onUpdated }) {
           {...confirm}
           onClose={() => setConfirm(null)}
           onConfirm={async () => {
-            const r = await api(confirm.url, { method: "POST" });
+            const r = await api(confirm.url, {
+              method: "POST",
+            });
             points.refresh();
             onUpdated();
             return r;

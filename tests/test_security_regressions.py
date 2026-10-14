@@ -18,7 +18,7 @@ import unittest
 from unittest.mock import patch
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / 'gnss-caster-install-3.0.1.sh'
+SCRIPT = Path(__file__).resolve().parents[1] / 'gnss-caster-install.sh'
 SOURCE = SCRIPT.read_text(encoding='utf-8')
 FACTORY = SOURCE.split("cat > $APP/web/factory.py << 'EOF'\n", 1)[1].split('\nEOF\n', 1)[0]
 TREE = ast.parse(FACTORY)

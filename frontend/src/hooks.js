@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { api } from "./api";
+import { t } from "./i18n";
 
 // Schedule after completion: no overlapping requests, no polling hidden tabs,
 // and no response from an old page can overwrite the next page's state.
@@ -79,9 +80,9 @@ export function useAction() {
       const result = await fn();
       setNotice({
         severity: result?.warnings?.length ? "warning" : "success",
-        text: [result?.message || "Done", ...(result?.warnings || [])].join(
-          " · ",
-        ),
+        text: [result?.message || "Done", ...(result?.warnings || [])]
+          .map((message) => t(message))
+          .join(" · "),
       });
       done?.(result);
       return result;

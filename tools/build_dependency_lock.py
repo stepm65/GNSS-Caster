@@ -11,7 +11,7 @@ from pip._vendor.packaging.specifiers import SpecifierSet
 from pip._vendor.packaging.utils import canonicalize_name
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / 'gnss-caster-install-3.0.1.sh'
+SCRIPT = ROOT / 'gnss-caster-install.sh'
 TARGETS = [dict(python_version=f'3.{v}', python_full_version=f'3.{v}.0',
                 os_name='posix', sys_platform='linux', platform_system='Linux',
                 platform_machine=machine, platform_python_implementation='CPython',

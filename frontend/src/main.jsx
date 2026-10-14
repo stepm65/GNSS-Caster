@@ -1,4 +1,13 @@
-import React, { useState, useMemo, lazy, Suspense } from "react";
+import { t, getLanguage, subscribeLanguage } from "./i18n";
+import { LanguagePicker } from "./LanguagePicker";
+import { ruRU, enUS } from "@mui/material/locale";
+import React, {
+  useState,
+  useMemo,
+  useSyncExternalStore,
+  lazy,
+  Suspense,
+} from "react";
 import { createRoot } from "react-dom/client";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
@@ -51,7 +60,6 @@ const Stations = lazy(() => import("./pages/Stations"));
 const System = lazy(() => import("./pages/System"));
 const Security = lazy(() => import("./pages/Security"));
 const Login = lazy(() => import("./pages/Login"));
-
 const boot = JSON.parse(
   document.getElementById("gnss-bootstrap")?.textContent || "{}",
 );
@@ -87,8 +95,8 @@ function Content() {
   if (boot.errorPage)
     return (
       <Alert severity="error">
-        {boot.error || "This page is unavailable."}{" "}
-        <Button href="/dashboard">Back to overview</Button>
+        {boot.error || t("This page is unavailable.")}{" "}
+        <Button href="/dashboard">{t("Back to overview")}</Button>
       </Alert>
     );
   if (path === "/dashboard" || path === "/") return <Dashboard />;
@@ -102,20 +110,25 @@ function Content() {
   if (path === "/user_settings") return <Security />;
   return (
     <Alert severity="info">
-      Page not found. <Button href="/dashboard">Open overview</Button>
+      {t("Page not found. ")}
+      <Button href="/dashboard">{t("Open overview")}</Button>
     </Alert>
   );
 }
 class ErrorBoundary extends React.Component {
-  state = { failed: false };
+  state = {
+    failed: false,
+  };
   static getDerivedStateFromError() {
-    return { failed: true };
+    return {
+      failed: true,
+    };
   }
   render() {
     return this.state.failed ? (
       <Alert severity="error">
-        Unable to display this page.{" "}
-        <Button onClick={() => location.reload()}>Reload</Button>
+        {t("Unable to display this page.")}{" "}
+        <Button onClick={() => location.reload()}>{t("Reload")}</Button>
       </Alert>
     ) : (
       this.props.children
@@ -123,6 +136,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 function App() {
+  const language = useSyncExternalStore(subscribeLanguage, getLanguage);
   const [mode, setMode] = useState(() => {
     try {
       return localStorage.getItem("gnss_theme") === "dark" ? "dark" : "light";
@@ -133,61 +147,112 @@ function App() {
   const [mobile, setMobile] = useState(false);
   const theme = useMemo(
     () =>
-      createTheme({
-        palette: {
-          mode,
-          primary: { main: mode === "dark" ? "#83cbb1" : "#216d56" },
-          background: {
-            default: mode === "dark" ? "#111b1a" : "#f5f7f6",
-            paper: mode === "dark" ? "#1a2725" : "#ffffff",
+      createTheme(
+        {
+          palette: {
+            mode,
+            primary: {
+              main: mode === "dark" ? "#83cbb1" : "#216d56",
+            },
+            background: {
+              default: mode === "dark" ? "#111b1a" : "#f5f7f6",
+              paper: mode === "dark" ? "#1a2725" : "#ffffff",
+            },
+            text: {
+              primary: mode === "dark" ? "#e5eeeb" : "#20332c",
+              secondary: mode === "dark" ? "#a1b4ad" : "#6b7b73",
+            },
+            divider: mode === "dark" ? "#30433c" : "#e3e9e5",
+            success: {
+              main: "#318465",
+            },
           },
-          text: {
-            primary: mode === "dark" ? "#e5eeeb" : "#20332c",
-            secondary: mode === "dark" ? "#a1b4ad" : "#6b7b73",
+          typography: {
+            fontFamily: 'Inter, "Segoe UI", sans-serif',
+            h3: {
+              fontWeight: 650,
+              fontSize: "2.25rem",
+            },
+            h4: {
+              fontWeight: 650,
+              fontSize: "1.85rem",
+              letterSpacing: "-.04em",
+            },
+            h6: {
+              fontWeight: 650,
+              fontSize: "1rem",
+            },
+            overline: {
+              fontSize: ".65rem",
+              fontWeight: 750,
+              letterSpacing: ".14em",
+            },
+            button: {
+              textTransform: "none",
+              fontWeight: 600,
+            },
           },
-          divider: mode === "dark" ? "#30433c" : "#e3e9e5",
-          success: { main: "#318465" },
-        },
-        typography: {
-          fontFamily: 'Inter, "Segoe UI", sans-serif',
-          h3: { fontWeight: 650, fontSize: "2.25rem" },
-          h4: { fontWeight: 650, fontSize: "1.85rem", letterSpacing: "-.04em" },
-          h6: { fontWeight: 650, fontSize: "1rem" },
-          overline: {
-            fontSize: ".65rem",
-            fontWeight: 750,
-            letterSpacing: ".14em",
+          shape: {
+            borderRadius: 12,
           },
-          button: { textTransform: "none", fontWeight: 600 },
-        },
-        shape: { borderRadius: 12 },
-        components: {
-          MuiButton: {
-            defaultProps: { disableElevation: true },
-            styleOverrides: { root: { borderRadius: 8 } },
-          },
-          MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
-          MuiTextField: { defaultProps: { size: "small" } },
-          MuiTableCell: {
-            styleOverrides: {
-              head: {
-                fontSize: ".72rem",
-                color: mode === "dark" ? "#a1b4ad" : "#6b7b73",
-                fontWeight: 650,
-                whiteSpace: "nowrap",
+          components: {
+            MuiButton: {
+              defaultProps: {
+                disableElevation: true,
               },
-              root: { padding: "16px 12px", fontFamily: "inherit" },
+              styleOverrides: {
+                root: {
+                  borderRadius: 8,
+                },
+              },
+            },
+            MuiPaper: {
+              styleOverrides: {
+                root: {
+                  backgroundImage: "none",
+                },
+              },
+            },
+            MuiTextField: {
+              defaultProps: {
+                size: "small",
+              },
+            },
+            MuiTableCell: {
+              styleOverrides: {
+                head: {
+                  fontSize: ".72rem",
+                  color: mode === "dark" ? "#a1b4ad" : "#6b7b73",
+                  fontWeight: 650,
+                  whiteSpace: "nowrap",
+                },
+                root: {
+                  padding: "16px 12px",
+                  fontFamily: "inherit",
+                },
+              },
+            },
+            MuiChip: {
+              styleOverrides: {
+                root: {
+                  borderRadius: 6,
+                  fontSize: ".7rem",
+                  fontWeight: 600,
+                },
+              },
+            },
+            MuiDialogActions: {
+              styleOverrides: {
+                root: {
+                  padding: 20,
+                },
+              },
             },
           },
-          MuiChip: {
-            styleOverrides: {
-              root: { borderRadius: 6, fontSize: ".7rem", fontWeight: 600 },
-            },
-          },
-          MuiDialogActions: { styleOverrides: { root: { padding: 20 } } },
         },
-      }),
-    [mode],
+        language === "ru" ? ruRU : enUS,
+      ),
+    [mode, language],
   );
   const toggle = () =>
     setMode((old) => {
@@ -199,13 +264,22 @@ function App() {
     });
   const nav = (
     <Box
-      sx={{ height: "100%", display: "flex", flexDirection: "column", p: 2 }}
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        p: 2,
+      }}
     >
       <Stack
         direction="row"
         spacing={1.5}
         alignItems="center"
-        sx={{ p: 1, pt: 2, pb: 4 }}
+        sx={{
+          p: 1,
+          pt: 2,
+          pb: 4,
+        }}
       >
         <Box
           sx={{
@@ -219,20 +293,27 @@ function App() {
           <SatelliteAlt />
         </Box>
         <Box>
-          <Typography fontWeight={750}>GNSS Caster</Typography>
+          <Typography fontWeight={750}>{t("GNSS Caster")}</Typography>
           <Typography variant="caption" color="text.secondary">
-            Correction control
+            {t("Correction control")}
           </Typography>
         </Box>
       </Stack>
       {navigation.map(([group, items]) => (
-        <Box key={group} sx={{ mb: 2 }}>
+        <Box
+          key={t(group)}
+          sx={{
+            mb: 2,
+          }}
+        >
           <Typography
             variant="overline"
             color="text.secondary"
-            sx={{ px: 1.5 }}
+            sx={{
+              px: 1.5,
+            }}
           >
-            {group}
+            {t(group)}
           </Typography>
           <List dense>
             {items.map(([name, href, Icon]) => (
@@ -254,11 +335,16 @@ function App() {
                   },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 36, color: "inherit" }}>
+                <ListItemIcon
+                  sx={{
+                    minWidth: 36,
+                    color: "inherit",
+                  }}
+                >
                   <Icon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText
-                  primary={name}
+                  primary={t(name)}
                   primaryTypographyProps={{
                     fontSize: ".85rem",
                     fontWeight: 550,
@@ -269,9 +355,15 @@ function App() {
           </List>
         </Box>
       ))}
-      <Box sx={{ mt: "auto", p: 1.5 }}>
+      <Box
+        sx={{
+          mt: "auto",
+          p: 1.5,
+        }}
+      >
         <Typography variant="caption" color="text.secondary">
-          GNSS Caster · {boot.version || "Development"}
+          {t("GNSS Caster \xB7 ")}
+          {boot.version || t("Development")}
         </Typography>
       </Box>
     </Box>
@@ -293,7 +385,12 @@ function App() {
               <Login boot={boot} />
             </Suspense>
           ) : (
-            <Box sx={{ display: "flex", minHeight: "100vh" }}>
+            <Box
+              sx={{
+                display: "flex",
+                minHeight: "100vh",
+              }}
+            >
               <Box
                 component="a"
                 href="#main"
@@ -309,17 +406,25 @@ function App() {
                   },
                 }}
               >
-                Skip to content
+                {t("Skip to content")}
               </Box>
               <Box
                 component="nav"
-                aria-label="Main navigation"
-                sx={{ width: { md: 238 }, flexShrink: 0 }}
+                aria-label={t("Main navigation")}
+                sx={{
+                  width: {
+                    md: 238,
+                  },
+                  flexShrink: 0,
+                }}
               >
                 <Drawer
                   variant="permanent"
                   sx={{
-                    display: { xs: "none", md: "block" },
+                    display: {
+                      xs: "none",
+                      md: "block",
+                    },
                     "& .MuiDrawer-paper": {
                       width: 238,
                       boxSizing: "border-box",
@@ -331,37 +436,58 @@ function App() {
                 <Drawer
                   open={mobile}
                   onClose={() => setMobile(false)}
-                  sx={{ "& .MuiDrawer-paper": { width: 260 } }}
+                  sx={{
+                    "& .MuiDrawer-paper": {
+                      width: 260,
+                    },
+                  }}
                 >
                   {nav}
                 </Drawer>
               </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                }}
+              >
                 <Toolbar
                   sx={{
                     bgcolor: "background.paper",
                     borderBottom: "1px solid",
                     borderColor: "divider",
-                    px: { xs: 2, md: 4 },
+                    px: {
+                      xs: 2,
+                      md: 4,
+                    },
                     gap: 1.5,
                   }}
                 >
                   <IconButton
-                    aria-label="Open navigation"
+                    aria-label={t("Open navigation")}
                     onClick={() => setMobile(true)}
-                    sx={{ display: { md: "none" } }}
+                    sx={{
+                      display: {
+                        md: "none",
+                      },
+                    }}
                   >
                     <Menu />
                   </IconButton>
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ flex: 1 }}
+                    sx={{
+                      flex: 1,
+                      display: { xs: "none", sm: "block" },
+                    }}
                   >
-                    Station workspace
+                    {t("Station workspace")}
                   </Typography>
                   <IconButton
-                    aria-label={`Switch to ${mode === "light" ? "dark" : "light"} theme`}
+                    aria-label={t("Switch to {0} theme", [
+                      t(mode === "light" ? "dark" : "light"),
+                    ])}
                     onClick={toggle}
                   >
                     {mode === "light" ? (
@@ -370,7 +496,14 @@ function App() {
                       <LightModeOutlined fontSize="small" />
                     )}
                   </IconButton>
-                  <Divider orientation="vertical" flexItem sx={{ my: 2 }} />
+                  <LanguagePicker />
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{
+                      my: 2,
+                    }}
+                  />
                   <Avatar
                     sx={{
                       width: 30,
@@ -381,12 +514,19 @@ function App() {
                   >
                     {(boot.username || "G")[0].toUpperCase()}
                   </Avatar>
-                  <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                  <Box
+                    sx={{
+                      display: {
+                        xs: "none",
+                        sm: "block",
+                      },
+                    }}
+                  >
                     <Typography variant="body2" fontWeight={600}>
-                      {boot.username || "GNSS Caster"}
+                      {boot.username || t("GNSS Caster")}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {boot.role || "Read only"}
+                      {boot.role || t("Read only")}
                     </Typography>
                   </Box>
                   <Box component="form" method="post" action="/logout">
@@ -395,7 +535,7 @@ function App() {
                       name="csrf_token"
                       value={csrfToken()}
                     />
-                    <IconButton aria-label="Sign out" type="submit">
+                    <IconButton aria-label={t("Sign out")} type="submit">
                       <Logout fontSize="small" />
                     </IconButton>
                   </Box>
@@ -405,21 +545,38 @@ function App() {
                   id="main"
                   tabIndex={-1}
                   sx={{
-                    p: { xs: 2, sm: 3, lg: 4 },
+                    p: {
+                      xs: 2,
+                      sm: 3,
+                      lg: 4,
+                    },
                     maxWidth: 1560,
                     mx: "auto",
                   }}
                 >
                   {boot.preview && (
-                    <Alert severity="info" sx={{ mb: 3 }}>
-                      Local preview · Sample data. The live caster is not
-                      connected.
+                    <Alert
+                      severity="info"
+                      sx={{
+                        mb: 3,
+                      }}
+                    >
+                      {t(
+                        "Local preview \xB7 Sample data. The live caster is not connected.",
+                      )}
                     </Alert>
                   )}
                   {boot.mustChangePassword && (
-                    <Alert severity="warning" sx={{ mb: 3 }}>
-                      Change your temporary password.{" "}
-                      <Button href="/user_settings">Account settings</Button>
+                    <Alert
+                      severity="warning"
+                      sx={{
+                        mb: 3,
+                      }}
+                    >
+                      {t("Change your temporary password.")}{" "}
+                      <Button href="/user_settings">
+                        {t("Account settings")}
+                      </Button>
                     </Alert>
                   )}
                   {boot.messages?.map(([severity, message], i) => (
@@ -432,9 +589,11 @@ function App() {
                           ? severity
                           : "info"
                       }
-                      sx={{ mb: 2 }}
+                      sx={{
+                        mb: 2,
+                      }}
                     >
-                      {message}
+                      {t(message)}
                     </Alert>
                   ))}
                   <Suspense fallback={<LinearProgress />}>
