@@ -23,6 +23,20 @@ class SecretMigrationTests(unittest.TestCase):
         proxy = NS(**{name:getattr(os,name) for name in ('open','fstat','fdopen','close','chmod','replace','unlink','fsync','path','O_RDONLY')})
         proxy.O_NOFOLLOW = getattr(os, 'O_NOFOLLOW', 0)
         proxy.O_NONBLOCK = getattr(os, 'O_NONBLOCK', 0)
+        # Model root ownership only inside the fixture. CI runs unprivileged;
+        # real file types, link counts, contents, and I/O errors remain intact.
+        def root_owned(info):
+            values = list(info)
+            values[4] = 0  # st_uid
+            return os.stat_result(values)
+
+        class FixturePath(type(self.root)):
+            def lstat(path, *args, **kwargs):
+                return root_owned(super().lstat(*args, **kwargs))
+
+        proxy.fstat = lambda fd: root_owned(os.fstat(fd))
+        self.fixture_path = FixturePath
+        self.ns['Path'] = FixturePath
         self.ns['os'] = proxy
         self.migrate = self.ns['migrate_secrets']
 
@@ -70,7 +84,14 @@ class SecretMigrationTests(unittest.TestCase):
 
     def test_wrong_file_owner_is_rejected(self):
         with patch.object(self.ns['os'], 'fstat', return_value=NS(st_mode=0o100600, st_uid=123, st_nlink=1)):
-            with self.assertRaises(ValueError): self.migrate('migrate', self.secure, self.legacy)
+            with self.assertRaisesRegex(ValueError, 'Unsafe secret file'):
+                self.migrate('migrate', self.secure, self.legacy)
+        self.assertTrue(self.legacy.exists())
+
+    def test_wrong_directory_owner_is_rejected(self):
+        with patch.object(self.fixture_path, 'lstat', return_value=NS(st_mode=0o40700, st_uid=123)):
+            with self.assertRaisesRegex(ValueError, 'Unsafe secret directory'):
+                self.migrate('migrate', self.secure, self.legacy)
         self.assertTrue(self.legacy.exists())
 
     def test_clean_install_creates_directory_without_fabricating_key(self):
