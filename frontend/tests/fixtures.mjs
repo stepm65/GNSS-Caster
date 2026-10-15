@@ -103,7 +103,7 @@ export function fixture(pathname) {
       system: {
         hostname: "caster.local",
         platform: "Linux",
-        version: "3.1.0",
+        version: "3.3.0",
         uptime: "2h 18m",
       },
       resources: {
@@ -306,6 +306,7 @@ export function fixture(pathname) {
         last_used: now - 15,
       },
     ],
+    "/api/system/updates/status": { current_version: "3.3.0", job: { status: "idle" }, release: null },
     "/api/2fa/status": { enabled: false, backup_codes_remaining: 0 },
     "/api/base_stations/1/command_log": [
       {

@@ -108,6 +108,7 @@ export function ResourceState({ resource }) {
     <>
       {resource.loading && (
         <LinearProgress
+          aria-label={t("Loading…")}
           sx={{
             mb: 2,
           }}

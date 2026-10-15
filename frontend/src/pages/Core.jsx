@@ -260,6 +260,7 @@ export function Dashboard() {
                   </Typography>
                 </Stack>
                 <LinearProgress
+                  aria-label={t(name)}
                   variant="determinate"
                   value={value ?? 0}
                   color={value > 90 ? "warning" : "primary"}
