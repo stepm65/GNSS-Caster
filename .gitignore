@@ -30,3 +30,7 @@ validation/ui/tmp*/
 frontend/test-results/
 frontend/playwright-report/
 .venv/
+
+# Generated release assets (created by the release workflow)
+/SHA256SUMS
+/release-notes.md

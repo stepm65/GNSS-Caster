@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-15",
+  "python": {
+    "date": "2026-10-15",
+    "source": "https://api.osv.dev/v1/querybatch",
+    "packages": 30,
+    "findings": []
+  },
+  "web": {
+    "command": "pnpm audit --json",
+    "registry": "https://registry.npmjs.org",
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "dependencies": 84,
+      "devDependencies": 100,
+      "optionalDependencies": 54,
+      "totalDependencies": 184
+    },
+    "advisories": {}
+  },
+  "limitation": "Known advisory databases only; no proof of absence of vulnerabilities."
+}

@@ -1,6 +1,6 @@
 {
   "name": "gnss-caster-web",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -20,6 +20,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.56.1",
     "@vitejs/plugin-react": "^5.0.0",
     "prettier": "3.6.2",

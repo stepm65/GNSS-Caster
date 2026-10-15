@@ -155,7 +155,7 @@ export default function Login({ boot }) {
               }}
             />
           </Box>
-          <Typography variant="h4">
+          <Typography variant="h4" component="h1">
             {twoFactor ? t("Verify it\u2019s you") : t("Welcome back")}
           </Typography>
           <Typography

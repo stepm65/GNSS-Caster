@@ -83,7 +83,7 @@ default to `en`; changing to `ru` requires no service restart.
 | Diagnostics | Component health, last valid frames, CRC failures, connection recovery, host details and readiness |
 | Logs | Filters, message search and CSV export |
 | Backups | Create, upload with progress/cancel, verify, download, restore, delete, storage health and job status |
-| System settings | Names, connections, retention, backup/encryption policy, Telegram, certificates, reboot/shutdown |
+| System settings | Names, connections, retention, backup/encryption policy, Telegram, certificates, reboot/shutdown, confirmed stable-release updates |
 | Account & access | Passwords, 2FA, recovery codes, roles, administrator password reset, API tokens |
 | Sign in / 2FA | Existing native POST forms, CSRF fields, server lockout and authenticator logic |
 
@@ -92,6 +92,13 @@ typing a confirmation word. Uploading an archive never starts restoration.
 Blank secret fields preserve existing credentials. Secrets are not written to
 browser storage. Polling is bounded by request timeouts, pauses in hidden tabs,
 stops after session expiry and is cancelled when a page component unmounts.
+
+The Updates tab is administrator-only. Installation requires reauthentication
+and `UPDATE`; it sends one request and polls the persisted status. The server
+validates the release and hardware-use counters independently of these controls.
+Browser tests include failure/reconnect cases and axe checks of key pages and the
+Russian mobile update dialog. Automated accessibility checks are not a complete
+screen-reader or WCAG conformance assessment.
 
 ## Deployment boundary
 

@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import Updates from "./Updates";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -352,6 +353,7 @@ function SystemSettings() {
         ))}
         <Tab label={t("Certificates")} />
         <Tab label={t("Power")} />
+        {isAdmin && <Tab label={t("Updates")} />}
       </Tabs>
       {tab < groups.length && settings.data && (
         <SettingsForm
@@ -457,6 +459,7 @@ function SystemSettings() {
           )}
         </Panel>
       )}
+      {isAdmin && tab === 6 && <Updates />}
       {confirm && (
         <Confirm
           {...confirm}
@@ -688,7 +691,11 @@ function Backups() {
                 mt: 3,
               }}
             >
-              <LinearProgress variant="determinate" value={progress} />
+              <LinearProgress
+                aria-label={t("Uploading backup")}
+                variant="determinate"
+                value={progress}
+              />
               <Stack
                 direction="row"
                 justifyContent="space-between"

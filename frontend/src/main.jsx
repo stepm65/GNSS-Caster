@@ -22,6 +22,7 @@ import {
   IconButton,
   LinearProgress,
   List,
+  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
@@ -160,7 +161,7 @@ function App() {
             },
             text: {
               primary: mode === "dark" ? "#e5eeeb" : "#20332c",
-              secondary: mode === "dark" ? "#a1b4ad" : "#6b7b73",
+              secondary: mode === "dark" ? "#a1b4ad" : "#586a61",
             },
             divider: mode === "dark" ? "#30433c" : "#e3e9e5",
             success: {
@@ -222,7 +223,7 @@ function App() {
               styleOverrides: {
                 head: {
                   fontSize: ".72rem",
-                  color: mode === "dark" ? "#a1b4ad" : "#6b7b73",
+                  color: mode === "dark" ? "#a1b4ad" : "#586a61",
                   fontWeight: 650,
                   whiteSpace: "nowrap",
                 },
@@ -317,40 +318,41 @@ function App() {
           </Typography>
           <List dense>
             {items.map(([name, href, Icon]) => (
-              <ListItemButton
-                component="a"
-                href={href}
-                key={href}
-                selected={
-                  path === href ||
-                  (href === "/base_stations" && path.startsWith(href))
-                }
-                sx={{
-                  borderRadius: 2,
-                  mb: 0.5,
-                  py: 1.1,
-                  "&.Mui-selected": {
-                    bgcolor: "action.selected",
-                    color: "primary.main",
-                  },
-                }}
-              >
-                <ListItemIcon
+              <ListItem key={href} disablePadding>
+                <ListItemButton
+                  component="a"
+                  href={href}
+                  selected={
+                    path === href ||
+                    (href === "/base_stations" && path.startsWith(href))
+                  }
                   sx={{
-                    minWidth: 36,
-                    color: "inherit",
+                    borderRadius: 2,
+                    mb: 0.5,
+                    py: 1.1,
+                    "&.Mui-selected": {
+                      bgcolor: "action.selected",
+                      color: "primary.main",
+                    },
                   }}
                 >
-                  <Icon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText
-                  primary={t(name)}
-                  primaryTypographyProps={{
-                    fontSize: ".85rem",
-                    fontWeight: 550,
-                  }}
-                />
-              </ListItemButton>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 36,
+                      color: "inherit",
+                    }}
+                  >
+                    <Icon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={t(name)}
+                    primaryTypographyProps={{
+                      fontSize: ".85rem",
+                      fontWeight: 550,
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
             ))}
           </List>
         </Box>
@@ -381,7 +383,7 @@ function App() {
       >
         <ErrorBoundary>
           {isLogin ? (
-            <Suspense fallback={<LinearProgress />}>
+            <Suspense fallback={<LinearProgress aria-label={t("Loading…")} />}>
               <Login boot={boot} />
             </Suspense>
           ) : (
@@ -596,7 +598,9 @@ function App() {
                       {t(message)}
                     </Alert>
                   ))}
-                  <Suspense fallback={<LinearProgress />}>
+                  <Suspense
+                    fallback={<LinearProgress aria-label={t("Loading…")} />}
+                  >
                     <Content />
                   </Suspense>
                 </Box>
