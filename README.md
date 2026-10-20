@@ -88,6 +88,7 @@ GitHub Actions runs the Python tests, builds and packages the frontend, and runs
 
 - [Change history](CHANGES.md)
 - [Product review and development priorities](PRODUCT_REVIEW.md)
+- [Remaining engineering work beyond testing — 20 October 2026](ROADMAP.md)
 - [Web updates and release publication](UPDATES.md)
 - [Version 3.3.0 validation](validation/audit/REPORT.md)
 - [Frontend source, build and preview](frontend/README.md)
