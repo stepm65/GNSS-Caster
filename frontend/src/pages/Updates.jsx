@@ -29,6 +29,7 @@ export default function Updates() {
   const job = resource.data?.job || { status: "idle" };
   const release = resource.data?.release;
   const candidate = release?.candidate;
+  const recovery = resource.data?.recovery || [];
   const active = Boolean(accepted) || busyStates.includes(job.status);
   useEffect(() => {
     if (accepted && job.started_at >= accepted.started_at) setAccepted(null);
@@ -73,6 +74,19 @@ export default function Updates() {
             "Updates interrupt correction streams and web access. Finish field work and disconnect all rovers first. A rollback snapshot is created before files are changed.",
           )}
         </Alert>
+        {recovery.map((item) => (
+          <Alert severity="warning" key={item.id}>
+            <Typography>
+              {t("Unfinished maintenance needs local recovery before another update. Snapshot: {0}.", [item.id])}
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              {t("An administrator must inspect the journal over SSH. Recovery checks the saved files before restoring them.")}
+            </Typography>
+            <Typography component="pre" variant="body2" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+              {item.recovery_command}
+            </Typography>
+          </Alert>
+        ))}
         <Box>
           <Button
             variant="outlined"
@@ -137,7 +151,7 @@ export default function Updates() {
               <Box>
                 <Button
                   variant="contained"
-                  disabled={active || action.busy || Boolean(resource.error)}
+                  disabled={active || action.busy || Boolean(resource.error) || recovery.length > 0}
                   onClick={() => {
                     action.setNotice(null);
                     setConfirmation(true);

@@ -226,6 +226,17 @@ test("Russian mobile update confirmation remains readable and keyboard accessibl
   });
 });
 
+test("unfinished maintenance shows recovery instructions and blocks installation", async ({ page }) => {
+  const state = status();
+  state.recovery = [{
+    id: "rollback-fixture",
+    recovery_command: "sudo python3 -I /var/lib/gnss-caster-maintenance/recovery.py recover rollback-fixture --confirm",
+  }];
+  await open(page, state);
+  await expect(page.getByRole("button", { name: "Install version 3.4.0" })).toBeDisabled();
+  await expect(page.getByText(state.recovery[0].recovery_command, { exact: true })).toBeVisible();
+});
+
 test("key cabinet pages pass automated accessibility checks", async ({
   page,
 }) => {

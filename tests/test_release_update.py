@@ -120,6 +120,24 @@ class ReleaseWorkerTests(unittest.TestCase):
                 updater.start('v3.4.0', DIGEST)
             run.assert_not_called()
 
+    def test_unfinished_journal_blocks_update_before_scheduling(self):
+        with patch.object(updater, 'lock', return_value=contextlib.nullcontext()), \
+             patch.object(updater, 'status', return_value={'job': {'status': 'interrupted'}, 'recovery': [{'id': 'fixture'}]}), \
+             patch.object(updater, 'run') as run:
+            with self.assertRaisesRegex(updater.UpdateError, 'local recovery'):
+                updater.start('v3.4.0', DIGEST)
+            run.assert_not_called()
+
+    def test_confirmed_local_recovery_reconciles_interrupted_update(self):
+        self.state.update(status='interrupted', snapshot='/var/backups/gnss-caster/rollback-fixture')
+        recovered = {'snapshot': self.state['snapshot'], 'phase': 'rolled_back', 'updated_at': 123}
+        with patch.object(updater, 'read_json', side_effect=[self.state, None]), \
+             patch.object(updater, 'recovery_status', return_value=[recovered]):
+            result = updater.status()
+        self.assertEqual(result['job']['status'], 'rolled_back')
+        self.assertEqual(result['job']['finished_at'], 123)
+        self.assertEqual(result['recovery'], [])
+
     def test_start_blocks_connected_rovers_and_low_disk(self):
         candidate = updater.release_candidate(release(), '3.3.0')
         for connected in (True, False):
