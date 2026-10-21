@@ -2,6 +2,7 @@ import ast
 from contextlib import nullcontext
 from pathlib import Path
 import sys
+import tempfile
 import time
 import unittest
 from types import SimpleNamespace as NS
@@ -60,14 +61,20 @@ class TelegramLanguageTests(unittest.TestCase):
     def test_worker_reads_latest_language_and_test_message_uses_it(self):
         settings = dict(enabled=True, token='test-only', chat_id='42', language='ru', events={})
         post = Mock(return_value=(True, ''))
-        def thread(*, target, **kwargs):
-            return NS(start=target)
-        self.ns.update(load_settings=lambda app: settings, _post_message=post, threading=NS(Thread=thread))
-        self.ns['send'](True, '✅ GNSS Caster started (version 3.2.0).')
-        self.assertIn('запущен', post.call_args.args[2])
-        settings['language'] = 'en'
-        self.ns['send'](True, '✅ GNSS Caster started (version 3.2.0).')
-        self.assertIn('started', post.call_args.args[2])
+        call = Mock(return_value={'ok': True})
+        self.ns.update(load_settings=lambda app: settings, _post_message=post, _call=call)
+        with tempfile.TemporaryDirectory() as directory:
+            box = self.ns['NotificationOutbox'](NS(config={'INSTANCE_DIR': directory}))
+            box.enqueue('✅ GNSS Caster started (version 3.2.0).', None, None, 0)
+            settings['language'] = 'en'
+            box.process_one()
+            self.assertIn('started', call.call_args.args[2]['text'])
+            settings['language'] = 'ru'
+            box.SEND_INTERVAL = 0
+            with box.database() as conn: box.put_meta(conn, 'pace', 0)
+            box.enqueue('✅ GNSS Caster started (version 3.2.0).', None, None, 0)
+            box.process_one()
+            self.assertIn('запущен', call.call_args.args[2]['text'])
         settings['language'] = 'ru'
         self.assertEqual(self.ns['send_test'](True), (True, ''))
         self.assertIn('проверочное уведомление', post.call_args.args[2])

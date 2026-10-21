@@ -268,7 +268,66 @@ function SettingsForm({ group, settings, onSaved }) {
       {jobs.map((id) => (
         <PrivilegedJob key={id} id={id} />
       ))}
+      {group.name === "Notifications" && isAdmin && <NotificationDelivery />}
     </Panel>
+  );
+}
+function NotificationDelivery() {
+  const resource = useResource("/api/system/notify/status", 10000);
+  const data = resource.data;
+  const unhealthy =
+    data && (!data.available || !data.worker_running || data.worker_error);
+  return (
+    <Box sx={{ mt: 4 }}>
+      <Typography variant="h6" component="h2">
+        {t("Event notification delivery")}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {t(
+          "Event alerts are saved before sending. Up to 8 attempts within 30 minutes; test messages, bot replies and backup files are sent separately.",
+        )}
+      </Typography>
+      <ResourceState resource={resource} />
+      {unhealthy && (
+        <Alert severity="error">
+          {t(
+            "Notification delivery is unavailable. Check the service log and free disk space.",
+          )}
+        </Alert>
+      )}
+      {data?.available && (
+        <>
+          {data.last_error && (
+            <Alert severity="warning" sx={{ my: 1 }}>
+              {t(data.last_error)}
+            </Alert>
+          )}
+          <KeyValues
+            data={{
+              [t("Waiting for delivery")]: `${data.pending} / ${data.capacity}`,
+              [t("Next attempt in seconds")]: Math.ceil(
+                data.next_attempt_seconds || 0,
+              ),
+              [t("Last successful event delivery")]: data.last_success
+                ? date(data.last_success)
+                : t("No successful delivery recorded"),
+              [t("Delivered events")]: data.counts.delivered,
+              [t("Failed events")]: data.counts.failed,
+              [t("Expired events")]: data.counts.expired,
+              [t("Cancelled after settings change")]: data.counts.cancelled,
+              [t("Rejected because queue was full")]: data.counts.overflow,
+              [t("Local write failures since service start")]:
+                data.write_failures,
+            }}
+          />
+          <Typography variant="body2" color="text.secondary">
+            {t(
+              "Totals are kept across restarts. A timeout can cause a duplicate; queued does not mean delivered.",
+            )}
+          </Typography>
+        </>
+      )}
+    </Box>
   );
 }
 function PrivilegedJob({ id }) {
