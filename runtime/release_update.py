@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import sqlite3
 import stat
 import subprocess
@@ -28,6 +29,11 @@ UNIT = 'gnss-caster-release-update.service'
 MAX_ASSET = 20 * 1024 * 1024
 MAX_JSON = 1024 * 1024
 BUSY = {'queued', 'checking', 'downloading', 'installing'}
+STAGE_TIMEOUTS = {'snapshot': 600, 'dependencies': 1800, 'configuration': 900,
+                  'migration': 600, 'health': 300, 'rollback': 900}
+INSTALL_TIMEOUT = 3600
+ROLLBACK_TIMEOUT = 900
+HEARTBEAT_SECONDS = 5
 CLEAN_ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LANG': 'C.UTF-8',
              'HOME': '/root', 'DEBIAN_FRONTEND': 'noninteractive'}
 
@@ -155,6 +161,12 @@ def write_json(name, data):
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary, STORE / name)
+        if os.name == 'posix':
+            directory_fd = os.open(STORE, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
@@ -190,7 +202,7 @@ def status():
     if state['status'] in BUSY:
         result = run(['/usr/bin/systemctl', 'show', UNIT, '--property=ActiveState', '--value'],
                      capture_output=True, timeout=10)
-        active = result.stdout.strip() in ('active', 'activating', 'reloading')
+        active = result.stdout.strip() in ('active', 'activating', 'reloading', 'deactivating')
         if state.get('boot_id') != boot_id() or (not active and time.time() - state['started_at'] > 30):
             # A power cut/SIGKILL is not a successful rollback.
             state = dict(state, status='interrupted', message='Update interrupted; inspect the maintenance log',
@@ -265,7 +277,7 @@ def start(tag, digest):
         try:
             result = run(['/usr/bin/systemd-run', '--unit=' + UNIT, '--property=Type=oneshot',
                           '--property=RemainAfterExit=yes', '--property=UMask=0077',
-                          '--property=TimeoutStartSec=infinity', '--property=TimeoutStopSec=180',
+                          '--property=TimeoutStartSec=infinity', f'--property=TimeoutStopSec={ROLLBACK_TIMEOUT + 60}',
                           '--property=KillMode=mixed', '/usr/bin/python3', '-I',
                           str(BASE / 'release-update.py'), 'worker', tag, digest],
                          capture_output=True, timeout=20)
@@ -300,6 +312,115 @@ def install_asset(candidate, content):
     return path
 
 
+def record_installer_progress(line, state):
+    """Keep recovery coordinates while repair runs, not only after its exit."""
+    snapshot = re.fullmatch(r'Rollback snapshot created: (/var/backups/gnss-caster/rollback-[^\s/]+)', line)
+    if snapshot:
+        state['snapshot'] = snapshot[1]
+    if line.startswith('GNSS maintenance stage: '):
+        name = line.removeprefix('GNSS maintenance stage: ')
+        if name in STAGE_TIMEOUTS:
+            state['phase'] = name
+    if line == 'Rollback completed; previous service state restored.':
+        state['rollback_confirmed'] = True
+
+
+def run_installation(arguments, *, stdout, pass_fds, state):
+    """Forward one stop request and allow rollback before escalating.
+
+    A separate process group lets Bash and its current external command receive
+    TERM together. The supervisor stays alive so systemd mixed mode cannot kill
+    the rollback immediately after the main process exits.
+    """
+    requested = []
+    previous = {}
+    process = None
+    stopping_at = None
+    phase = 'snapshot'
+
+    def request_stop(signum, frame):
+        if not requested:
+            requested.append('signal')
+
+    def terminate_group(sig):
+        try:
+            os.killpg(process.pid, sig)
+        except ProcessLookupError:
+            pass
+
+    try:
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            previous[sig] = signal.signal(sig, request_stop)
+        if requested:
+            raise UpdateError('Update stopped before installation')
+        process = subprocess.Popen(arguments, env=CLEAN_ENV, text=True, stdout=stdout,
+                                   stderr=subprocess.STDOUT, pass_fds=pass_fds, start_new_session=True)
+        started = phase_started = last_heartbeat = time.monotonic()
+        phase = state.get('phase', 'snapshot')
+        partial = ''
+        with (STORE / 'maintenance.log').open(encoding='utf-8', errors='replace') as progress:
+            while True:
+                chunk = progress.read(256 * 1024)
+                lines = (partial + chunk).split('\n')
+                partial = lines.pop()[-65536:]
+                coordinates = (state.get('snapshot'), state.get('phase'), state.get('rollback_confirmed'))
+                for line in lines:
+                    record_installer_progress(line.strip(), state)
+                if coordinates != (state.get('snapshot'), state.get('phase'), state.get('rollback_confirmed')):
+                    write_json('state.json', state)
+                now = time.monotonic()
+                next_phase = state.get('phase', phase)
+                if next_phase != phase:
+                    phase, phase_started = next_phase, now
+                result = process.poll()
+                if result is not None:
+                    # Drain the remaining log before accepting a final result.
+                    if chunk:
+                        continue
+                    record_installer_progress(partial.strip(), state)
+                    return subprocess.CompletedProcess(arguments, result)
+                if not requested and (now - started >= INSTALL_TIMEOUT or
+                                      now - phase_started >= STAGE_TIMEOUTS.get(phase, 900)):
+                    requested.append('timeout')
+                if requested and stopping_at is None:
+                    state['stop_reason'] = requested[0]
+                    state['stop_requested_at'] = int(time.time())
+                    state['message'] = 'Stopping update; waiting for rollback'
+                    write_json('state.json', state)
+                    # A rollback triggered by repair itself must not be interrupted.
+                    if phase != 'rollback':
+                        terminate_group(signal.SIGTERM)
+                    stopping_at = now
+                if stopping_at is not None and now - stopping_at >= ROLLBACK_TIMEOUT:
+                    state['termination_escalated'] = True
+                    write_json('state.json', state)
+                    terminate_group(signal.SIGKILL)
+                    process.wait(timeout=30)
+                    raise UpdateError('Update could not stop safely; inspect the recovery snapshot')
+                if now - last_heartbeat >= HEARTBEAT_SECONDS:
+                    state['heartbeat_at'] = int(time.time())
+                    write_json('state.json', state)
+                    last_heartbeat = now
+                try:
+                    process.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    pass
+    finally:
+        # An exception in state/log handling must not leave an untracked installer.
+        try:
+            if process is not None and process.poll() is None:
+                if stopping_at is None and phase != 'rollback':
+                    terminate_group(signal.SIGTERM)
+                try:
+                    process.wait(timeout=ROLLBACK_TIMEOUT)
+                except subprocess.TimeoutExpired:
+                    terminate_group(signal.SIGKILL)
+                    process.wait(timeout=30)
+        finally:
+            for sig, handler in previous.items():
+                signal.signal(sig, handler)
+
+
 def worker(tag, digest):
     state = read_json('state.json')
     if not state or state.get('tag') != tag or state.get('sha256') != digest or state['status'] != 'queued':
@@ -332,8 +453,8 @@ def worker(tag, digest):
             try:
                 stage('installing', 'Installing; web interface may reconnect')
                 with (STORE / 'maintenance.log').open('a', encoding='utf-8') as log:
-                    result = run(['/bin/bash', str(path), '--repair'], stdout=log,
-                                 stderr=subprocess.STDOUT, pass_fds=(8,))
+                    result = run_installation(['/bin/bash', str(path), '--repair'], stdout=log,
+                                              pass_fds=(8,), state=state)
                 rolled_back = False
                 with (STORE / 'maintenance.log').open(encoding='utf-8', errors='replace') as log:
                     for line in iter(lambda: log.readline(65536), ''):
@@ -342,7 +463,7 @@ def worker(tag, digest):
                             state['snapshot'] = snapshot[1]
                         if line.strip() == 'Rollback completed; previous service state restored.':
                             rolled_back = True
-                if result.returncode:
+                if result.returncode or state.get('stop_reason'):
                     if rolled_back:
                         stage('rolled_back', 'Update failed; previous version restored')
                     else:
@@ -356,7 +477,7 @@ def worker(tag, digest):
                     os.close(8)
     except Exception as error:
         message = str(error) if isinstance(error, UpdateError) else 'Update failed; inspect the maintenance log'
-        stage('failed', message)
+        stage('interrupted' if state.get('termination_escalated') else 'failed', message)
     finally:
         state['finished_at'] = int(time.time())
         write_json('state.json', state)

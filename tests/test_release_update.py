@@ -163,7 +163,8 @@ class ReleaseWorkerTests(unittest.TestCase):
              patch.object(updater.os, 'dup2'), \
              patch.object(updater, 'fetch', side_effect=fetch_error or [json.dumps(release()).encode(), CONTENT]), \
              patch.object(updater, 'active_rovers', return_value=connected), \
-             patch.object(updater, 'run', side_effect=execute) as run:
+             patch.object(updater, 'run', side_effect=execute), \
+             patch.object(updater, 'run_installation', side_effect=execute) as run:
             result = updater.worker('v3.4.0', DIGEST)
             return result, run
 
@@ -248,6 +249,8 @@ class ReleaseStorageTests(unittest.TestCase):
         packager = importlib.util.module_from_spec(spec); spec.loader.exec_module(packager)
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            (root / 'frontend').mkdir()
+            (root / 'frontend/package.json').write_text('{"version":"3.4.0"}')
             (root / 'gnss-caster-install.sh').write_bytes(CONTENT)
             (root / 'CHANGES.md').write_text('## 3.4.0 — Test\n\nChanges\n\n## 3.3.0\nOld\n', encoding='utf-8')
             for version in ('3.3.0', '3.4.0;id', '3.4.0-rc1'):
@@ -256,6 +259,9 @@ class ReleaseStorageTests(unittest.TestCase):
             packager.prepare('3.4.0', root)
             self.assertEqual((root / 'SHA256SUMS').read_text().split()[0], DIGEST)
             self.assertNotIn('Old', (root / 'release-notes.md').read_text(encoding='utf-8'))
+            (root / 'frontend/package.json').write_text('{"version":"3.3.0"}')
+            with self.assertRaisesRegex(ValueError, 'frontend'):
+                packager.prepare('3.4.0', root)
 
 
 class ReleaseRouteTests(unittest.TestCase):

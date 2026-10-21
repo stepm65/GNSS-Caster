@@ -1,5 +1,6 @@
 """Prepare immutable release inputs; creating/publishing the release is separate."""
 import hashlib
+import json
 from pathlib import Path
 import re
 import sys
@@ -14,6 +15,9 @@ def prepare(version, root=ROOT):
     text = installer.decode('utf-8')
     if not re.search(r'^CASTER_VERSION="' + re.escape(version) + r'"$', text, re.M):
         raise ValueError('Release version differs from installer')
+    web_version = json.loads((root / 'frontend/package.json').read_text(encoding='utf-8'))['version']
+    if web_version != version:
+        raise ValueError('Release version differs from frontend')
     changes = (root / 'CHANGES.md').read_text(encoding='utf-8')
     match = re.search(r'^## ' + re.escape(version) + r'\b[^\n]*\n(.*?)(?=^## |\Z)', changes, re.M | re.S)
     if not match:

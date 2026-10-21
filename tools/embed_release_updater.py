@@ -1,4 +1,5 @@
 """Embed the independently testable release helper in the standalone installer."""
+import argparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,5 +21,13 @@ if START in text:
     text = before + block + after
 else:
     text = text.replace('write_privileged_helper() {\n', block + '\nwrite_privileged_helper() {\n', 1)
-path.write_text(text, encoding='utf-8', newline='\n')
-print('Embedded release updater')
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--check', action='store_true')
+args = parser.parse_args()
+if args.check:
+    if path.read_text(encoding='utf-8') != text:
+        raise SystemExit('Embedded updater differs from runtime/release_update.py; run tools/embed_release_updater.py')
+    print('Committed release updater matches its source')
+else:
+    path.write_text(text, encoding='utf-8', newline='\n')
+    print('Embedded release updater')
