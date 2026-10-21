@@ -670,5 +670,11 @@
   "Field work in progress — block maintenance": "Идут полевые работы — запретить обслуживание",
   "Field work mode must be enabled or disabled": "Режим полевых работ должен быть включён или выключен",
   "Maintenance is running; wait before changing field work mode": "Идёт обслуживание; дождитесь завершения перед сменой режима полевых работ",
-  "Finish field work mode before maintenance": "Перед обслуживанием выключите режим полевых работ"
+  "Finish field work mode before maintenance": "Перед обслуживанием выключите режим полевых работ",
+  "Unfinished maintenance needs local recovery before another update. Snapshot: {0}.": "Перед новым обновлением нужно восстановить незавершённую операцию локально. Снимок: {0}.",
+  "An administrator must inspect the journal over SSH. Recovery checks the saved files before restoring them.": "Администратору нужно проверить журнал через SSH. Перед восстановлением проверяются сохранённые файлы.",
+  "Unfinished maintenance requires local recovery before updating": "Перед обновлением нужно локально восстановить незавершённую операцию обслуживания",
+  "Previous version restored by local recovery": "Предыдущая версия возвращена локальной командой восстановления",
+  "Unsafe recovery helper": "Не прошла проверка защиты программы восстановления",
+  "Cannot read recovery journal; inspect it locally before updating": "Не удалось прочитать журнал восстановления; проверьте его локально перед обновлением"
 }

@@ -4,6 +4,9 @@ System services are mocked. All filesystem mutations stay in a temporary test
 directory; no installer entry point or privileged system command is executed.
 """
 from contextlib import closing
+import contextlib
+import importlib.util
+import json
 import os
 from pathlib import Path
 import shutil
@@ -144,14 +147,33 @@ class InstallerRollbackTests(unittest.TestCase):
             'sqlite_database_tool', 'rollback_backup_path', 'backup_path_for_rollback',
             'create_install_rollback_snapshot', 'restore_install_service_state',
             'validate_install_rollback_snapshot', 'restore_install_rollback_snapshot',
-            'handle_install_exit',
+            'handle_install_exit', 'record_maintenance_phase', 'record_install_journal',
             'begin_runtime_transaction', 'finish_repair_transaction',
         ))
 
-    def run_case(self, failure, initially_active=True, prefix=''):
+    def run_case(self, failure, initially_active=True, prefix='', journal=False):
         env = os.environ.copy()
         env['TEST_ROOT'] = self.root.as_posix()
         env['TEST_PYTHON'] = Path(sys.executable).as_posix()
+        env['TEST_BASH'] = Path(find_bash()).as_posix()
+        if journal:
+            shim = f"""
+import contextlib, importlib.util, os, sys
+from pathlib import Path
+spec = importlib.util.spec_from_file_location('recovery', {str(ROOT / 'runtime/recovery.py')!r})
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+m.ROOT = Path({str(self.root / 'snapshots')!r})
+m.BASE = Path({str(self.root / 'runtime')!r})
+# Only ownership and /proc are simulated; journal, hashes and scripts are real.
+m.trusted_directory = lambda path: None
+m.trusted_file = lambda path: None
+m.boot_id = lambda: 'fixture-boot'
+m.process_identity = lambda pid: 'fixture-' + str(pid)
+os.geteuid = lambda: 0
+m.main(sys.argv[1:])
+"""
+            (self.root / 'recovery-fixture.py').write_text(shim, encoding='utf-8')
         harness = r'''
 set -eE
 export PATH="/usr/bin:/bin:$PATH"
@@ -178,7 +200,10 @@ INSTALL_HEALTH_URL=""
 INSTALL_CASTER_ENABLED=disabled
 INSTALL_FAILED_LINE=unknown
 SCRIPT_MODE=install
+CASTER_VERSION=3.3.3
 acquire_admission_guard() { :; }  # Admission is exercised by its own lock/SQLite tests.
+write_recovery_support() { :; }
+prepare_install_recovery() { :; }  # Durable journal has separate tests.
 mkdir -p "$INST"
 printf old > "$APP"
 printf old-unit > "$SERVICE"
@@ -206,7 +231,11 @@ cp() {
 }
 chown() { :; }
 chmod() { :; }  # POSIX ownership/modes are not emulated by the Windows harness.
-python3() { "$TEST_PYTHON" "$@"; }
+bash() { "$TEST_BASH" "$@"; }
+python3() {
+    if [ "${2:-}" = /var/lib/gnss-caster-maintenance/recovery.py ]; then return 0; fi
+    "$TEST_PYTHON" "$@"
+}
 get_config_value() { printf 8080; }
 curl() { [ "${FAIL_HEALTH:-0}" != 1 ]; }
 nginx() { :; }
@@ -237,6 +266,19 @@ print_install_rollback_paths() {
 '''
         if initially_active:
             harness += '\n: > "$TEST_ROOT/gnss-caster.active"\n'
+        if journal:
+            harness += '\n' + bash_function('prepare_install_recovery') + r'''
+python3() {
+    if [ "${2:-}" = /var/lib/gnss-caster-maintenance/recovery.py ]; then
+        shift 2
+        "$TEST_PYTHON" "$TEST_ROOT/recovery-fixture.py" "$@"
+    else
+        "$TEST_PYTHON" "$@"
+    fi
+}
+'''
+        self.recovery_harness = harness
+        self.recovery_env = env
         harness += '\n' + self.functions + '\n' + prefix + r'''
 begin_runtime_transaction
 printf new > "$APP"
@@ -398,6 +440,58 @@ exit 9
         with closing(sqlite3.connect(database)) as connection:
             self.assertEqual(connection.execute('SELECT value FROM data').fetchone()[0], 'original')
         self.assertFalse(Path(str(database) + '-wal').exists())
+
+    def test_durable_journal_survives_killed_installer_with_complete_snapshot(self):
+        result = self.run_case('kill -KILL "$BASHPID"', journal=True)
+        self.assertNotEqual(result.returncode, 0)
+        snapshot = next((self.root / 'snapshots').glob('rollback-*'))
+        state = json.loads((snapshot / 'transaction.json').read_text())
+        self.assertTrue(state['snapshot_ready'])
+        self.assertEqual(state['phase'], 'prepared')
+        self.assertEqual(state['services']['caster_active'], '1')
+        self.assertEqual((self.root / 'runtime/app').read_text(), 'new')
+        self.assertFalse((self.root / 'gnss-caster.active').exists())
+        parsed = subprocess.run([find_bash(), '-n', str(snapshot / 'recover.sh')],
+                                text=True, capture_output=True, timeout=10)
+        self.assertEqual(parsed.returncode, 0, parsed.stderr)
+
+    def test_durable_journal_records_confirmed_automatic_rollback(self):
+        result = self.run_case('false', journal=True)
+        self.assert_restored(result, 1)
+        snapshot = next((self.root / 'snapshots').glob('rollback-*'))
+        state = json.loads((snapshot / 'transaction.json').read_text())
+        self.assertEqual(state['phase'], 'rolled_back')
+
+    def test_saved_program_recovers_after_installer_process_is_gone(self):
+        result = self.run_case('kill -KILL "$BASHPID"', journal=True)
+        self.assertNotEqual(result.returncode, 0)
+        snapshot = next((self.root / 'snapshots').glob('rollback-*'))
+        spec = importlib.util.spec_from_file_location('isolated_recovery', ROOT / 'runtime/recovery.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        definitions = ['set -eE', 'export PATH="/usr/bin:/bin:$PATH"', 'TEST_ROOT="$(cd "$TEST_ROOT" && pwd)"']
+        for name in ('rm', 'cp', 'curl', 'nginx', 'ufw', 'sleep', 'systemctl', 'python3'):
+            start = self.recovery_harness.rindex(name + '() {')
+            first_end = self.recovery_harness.index('\n', start)
+            end = first_end if self.recovery_harness[first_end - 1] == '}' else self.recovery_harness.index('\n}', start) + 2
+            definitions.append(self.recovery_harness[start:end])
+        def run_saved(arguments, **kwargs):
+            program = '\n'.join(definitions) + '\n' + Path(arguments[-2]).read_text()
+            result = subprocess.run([find_bash(), '-s', '--', arguments[-1]], input=program,
+                                    env=self.recovery_env, text=True, capture_output=True, timeout=15)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            return result
+        with patch.multiple(module, ROOT=self.root / 'snapshots', BASE=self.root / 'runtime'), \
+             patch.object(module, 'trusted_directory'), patch.object(module, 'trusted_file'), \
+             patch.object(module, 'boot_id', return_value='fixture-boot'), \
+             patch.object(module, 'process_identity', return_value='fixture-process'), \
+             patch.object(module, 'exclusive', side_effect=lambda *a, **kw: contextlib.nullcontext(7)), \
+             patch.object(module, 'check_live_work'), patch.object(module, 'run', side_effect=run_saved):
+            outcome = module.recover(snapshot)
+        self.assertEqual(outcome['phase'], 'rolled_back')
+        self.assertEqual((self.root / 'runtime/app').read_text(), 'old')
+        self.assertFalse((self.root / 'runtime/instance/secret.env').exists())
+        self.assertTrue((self.root / 'gnss-caster.active').exists())
 
     def test_generated_shared_functions_have_valid_bash_syntax(self):
         names = ('sqlite_database_tool', 'acquire_maintenance_lock', 'ensure_admission_lock', 'acquire_admission_guard')

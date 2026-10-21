@@ -197,6 +197,19 @@ def boot_id():
     return Path('/proc/sys/kernel/random/boot_id').read_text().strip()
 
 
+def recovery_status():
+    helper = Path('/var/lib/gnss-caster-maintenance/recovery.py')
+    if not helper.exists():
+        return []  # Bootstrap from an older runtime without durable journals.
+    info = helper.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o022:
+        raise UpdateError('Unsafe recovery helper')
+    result = run(['/usr/bin/python3', '-I', str(helper), 'status'], capture_output=True, timeout=15)
+    if result.returncode:
+        raise UpdateError('Cannot read recovery journal; inspect it locally before updating')
+    return json.loads(result.stdout)
+
+
 def status():
     state = read_json('state.json', {'status': 'idle'})
     if state['status'] in BUSY:
@@ -208,12 +221,21 @@ def status():
             state = dict(state, status='interrupted', message='Update interrupted; inspect the maintenance log',
                          finished_at=int(time.time()))
             write_json('state.json', state)
+    recovery = recovery_status()
+    if state['status'] in ('failed', 'interrupted') and state.get('snapshot'):
+        restored = next((item for item in recovery
+                         if item['snapshot'] == state['snapshot'] and item['phase'] == 'rolled_back'), None)
+        if restored:
+            state = dict(state, status='rolled_back', message='Previous version restored by local recovery',
+                         finished_at=restored['updated_at'])
+            write_json('state.json', state)
     installed = current_version()
     checked = read_json('candidate.json')
     if checked and checked.get('candidate'):
         checked['candidate']['available'] = version(checked['candidate']['tag']) > version(installed)
     return {'current_version': installed, 'job': state,
-            'release': checked, 'repository': f'https://github.com/{REPO}'}
+            'release': checked, 'repository': f'https://github.com/{REPO}',
+            'recovery': [item for item in recovery if item['phase'] not in ('committed', 'rolled_back', 'snapshot_failed')]}
 
 
 def check():
@@ -257,8 +279,11 @@ def start(tag, digest):
     if not re.fullmatch(r'[0-9a-f]{64}', digest):
         raise UpdateError('Invalid release digest')
     with lock(STORE / 'request.lock'):
-        if status()['job']['status'] in BUSY:
+        current = status()
+        if current['job']['status'] in BUSY:
             raise UpdateError('An update is already running')
+        if current.get('recovery'):
+            raise UpdateError('Unfinished maintenance requires local recovery before updating')
         checked = read_json('candidate.json', {})
         candidate = checked.get('candidate') or {}
         if time.time() - checked.get('checked_at', 0) > 600 or candidate.get('tag') != tag or candidate.get('sha256') != digest:
