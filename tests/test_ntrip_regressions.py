@@ -7,7 +7,7 @@ import ast
 import base64
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import logging
 from pathlib import Path
 from queue import Queue, Empty, Full
@@ -34,7 +34,7 @@ def embedded_class(module, name, namespace):
 
 def server_type(namespace=None):
     ns = dict(socket=socket, threading=threading, time=time, uuid=uuid,
-              logger=logging.getLogger('test.ntrip'), text=lambda value: value)
+              logger=logging.getLogger('test.ntrip'), text=lambda value: value, admission_guard=nullcontext)
     ns.update(namespace or {})
     return embedded_class('ntrip/core.py', 'NTRIPServer', ns), ns
 
@@ -365,6 +365,23 @@ class HandlerTests(unittest.TestCase):
         self.assertFalse(thread.is_alive())
         self.assertEqual(self.server.connections, {})
         self.assertEqual(self.session.execute('SELECT active_conn FROM rover').fetchone()[0], 0)
+
+    def test_maintenance_returns_retry_without_reserving_a_rover(self):
+        client, peer = self.prepare_handler()
+        @contextmanager
+        def busy_guard():
+            raise BlockingIOError('maintenance')
+            yield
+        self.ns['admission_guard'] = busy_guard
+        thread = self.launch(client)
+        peer.sendall(b'GET /BASE HTTP/1.0\r\nAuthorization: Basic dXNlcjpwYXNz\r\n\r\n')
+        response = peer.recv(512)
+        thread.join(3)
+        self.assertFalse(thread.is_alive())
+        self.assertTrue(response.startswith(b'HTTP/1.1 503'))
+        self.assertIn(b'Retry-After: 30', response)
+        self.assertEqual(self.server.connections, {})
+        self.assertEqual(self.session.execute('SELECT active_conn, total_connections FROM rover').fetchone(), (0, 0))
 
     def test_send_failure_after_reservation_releases_slot(self):
         client, peer = self.prepare_handler()

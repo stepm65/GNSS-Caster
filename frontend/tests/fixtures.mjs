@@ -47,6 +47,7 @@ export const settings = {
   log_retention: setting(30),
   data_retention: setting(365),
   gnss_time_sync: setting(false),
+  field_work_active: setting(false),
   ntrip_enabled: setting(true),
   bluetooth_enabled: setting(true),
   bluetooth_discoverable: setting(false),

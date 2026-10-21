@@ -178,6 +178,7 @@ INSTALL_HEALTH_URL=""
 INSTALL_CASTER_ENABLED=disabled
 INSTALL_FAILED_LINE=unknown
 SCRIPT_MODE=install
+acquire_admission_guard() { :; }  # Admission is exercised by its own lock/SQLite tests.
 mkdir -p "$INST"
 printf old > "$APP"
 printf old-unit > "$SERVICE"
@@ -399,8 +400,9 @@ exit 9
         self.assertFalse(Path(str(database) + '-wal').exists())
 
     def test_generated_shared_functions_have_valid_bash_syntax(self):
-        definitions = bash_function('sqlite_database_tool') + '\n' + bash_function('acquire_maintenance_lock')
-        generated = subprocess.run([find_bash()], input=definitions + '\ndeclare -f sqlite_database_tool acquire_maintenance_lock\n',
+        names = ('sqlite_database_tool', 'acquire_maintenance_lock', 'ensure_admission_lock', 'acquire_admission_guard')
+        definitions = '\n'.join(bash_function(name) for name in names)
+        generated = subprocess.run([find_bash()], input=definitions + '\ndeclare -f ' + ' '.join(names) + '\n',
                                    encoding='utf-8', capture_output=True, timeout=10)
         self.assertEqual(generated.returncode, 0, generated.stderr)
         parsed = subprocess.run([find_bash(), '-n'], input=generated.stdout,

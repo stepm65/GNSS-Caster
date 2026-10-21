@@ -185,6 +185,18 @@ test("secret settings are omitted unless explicitly replaced", async ({
   expect(payload).toEqual({ telegram_chat_id: "-100987654" });
 });
 
+test("field work protection is saved explicitly in general settings", async ({ page }) => {
+  let payload;
+  await page.route("**/api/system/settings/update", (route) => {
+    payload = route.request().postDataJSON();
+    return route.fulfill({ json: { message: "System settings updated", applied: {} } });
+  });
+  await page.goto("/system_configuration");
+  await page.getByLabel("Field work in progress — block maintenance").check();
+  await page.getByRole("button", { name: "Save general", exact: true }).click();
+  await expect.poll(() => payload).toEqual({ field_work_active: true });
+});
+
 test("uploaded backup requires separate confirmation before restore", async ({
   page,
 }) => {

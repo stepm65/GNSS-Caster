@@ -203,12 +203,18 @@ class ReleaseStorageTests(unittest.TestCase):
             config.write_text(f'database:\n  path: "{dbpath}"\n', encoding='utf-8')
             with contextlib.closing(sqlite3.connect(dbpath)) as db:
                 db.execute('CREATE TABLE rover (active_conn INTEGER)')
+                db.execute('CREATE TABLE system_setting (key TEXT, value TEXT)')
                 db.executemany('INSERT INTO rover VALUES (?)', [(0,), (2,)])
                 db.commit()
             # Normalize Windows paths: the supported deployment is Linux; the
             # reader must nevertheless refuse any non-standard configured path.
             with patch.object(updater, 'BASE', base):
                 self.assertEqual(updater.active_rovers(), 2)
+                with contextlib.closing(sqlite3.connect(dbpath)) as database:
+                    database.execute("INSERT INTO system_setting VALUES ('field_work_active', 'true')")
+                    database.commit()
+                with self.assertRaisesRegex(updater.UpdateError, 'field work'):
+                    updater.active_rovers()
                 config.write_text('database:\n  path: /elsewhere.sqlite\n')
                 with self.assertRaisesRegex(updater.UpdateError, 'standard database'):
                     updater.active_rovers()
