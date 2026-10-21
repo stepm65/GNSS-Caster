@@ -58,6 +58,9 @@ const groups = [
       field("gnss_time_sync", "boolean", {
         label: "Synchronize time from GNSS",
       }),
+      field("field_work_active", "boolean", {
+        label: "Field work in progress — block maintenance",
+      }),
     ],
   },
   {

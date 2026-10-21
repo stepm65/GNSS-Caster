@@ -232,6 +232,9 @@ def active_rovers():
     if configured != [str(path)]:
         raise UpdateError('Web updates require the standard database location')
     with contextlib.closing(sqlite3.connect(path.as_uri() + '?mode=ro', uri=True, timeout=5)) as db:
+        field = db.execute("SELECT value FROM system_setting WHERE key='field_work_active'").fetchone()
+        if field and str(field[0]).lower() in ('1', 'true', 'yes', 'on'):
+            raise UpdateError('Finish field work mode before maintenance')
         return int(db.execute('SELECT COALESCE(SUM(active_conn), 0) FROM rover').fetchone()[0])
 
 
