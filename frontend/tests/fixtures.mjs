@@ -74,6 +74,24 @@ export const settings = {
 export function fixture(pathname) {
   const path = pathname.split("?")[0];
   const fixed = {
+    "/api/system/notify/status": {
+      available: true,
+      worker_running: true,
+      worker_error: false,
+      write_failures: 0,
+      pending: 0,
+      capacity: 200,
+      next_attempt_seconds: 0,
+      last_success: now - 30,
+      counts: {
+        delivered: 12,
+        failed: 0,
+        expired: 0,
+        cancelled: 0,
+        overflow: 0,
+      },
+      last_error: "",
+    },
     "/api/diagnostics": {
       status: "ok",
       components: {
@@ -307,7 +325,11 @@ export function fixture(pathname) {
         last_used: now - 15,
       },
     ],
-    "/api/system/updates/status": { current_version: "3.3.0", job: { status: "idle" }, release: null },
+    "/api/system/updates/status": {
+      current_version: "3.3.0",
+      job: { status: "idle" },
+      release: null,
+    },
     "/api/2fa/status": { enabled: false, backup_codes_remaining: 0 },
     "/api/base_stations/1/command_log": [
       {
