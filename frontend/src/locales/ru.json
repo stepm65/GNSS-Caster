@@ -663,5 +663,8 @@
   "Cannot determine installed version": "Не удалось определить установленную версию",
   "Untrusted download redirect": "Недоверенное перенаправление загрузки",
   "Untrusted release URL": "Недоверенный адрес выпуска",
-  "Update operation failed": "Операция обновления завершилась ошибкой"
+  "Update operation failed": "Операция обновления завершилась ошибкой",
+  "Stopping update; waiting for rollback": "Остановка обновления; ожидается завершение отката",
+  "Update stopped before installation": "Обновление остановлено до начала установки",
+  "Update could not stop safely; inspect the recovery snapshot": "Не удалось безопасно завершить обновление; требуется проверка снимка восстановления"
 }

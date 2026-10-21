@@ -3,6 +3,7 @@
 Build frontend/ with the locked pnpm dependencies first. No Node runtime or
 network access is needed on the caster. Running this tool is deterministic.
 """
+import argparse
 import base64
 import gzip
 import hashlib
@@ -68,9 +69,8 @@ PYTHON_REACT_ASSETS
     return block, entry
 
 
-def main():
-    source = INSTALLER.read_text(encoding='utf-8')
-    block, entry = build_block(ROOT / 'frontend/dist')
+def render(source, dist, templates_dir):
+    block, entry = build_block(dist)
     if START in source:
         before, rest = source.split(START, 1)
         _, after = rest.split(END, 1)
@@ -78,7 +78,7 @@ def main():
     else:
         marker = 'repair_installed_template_from_installer() {'
         source = source.replace(marker, block + '\n' + marker, 1)
-    base = (ROOT / 'frontend/templates/base.html').read_text(encoding='utf-8').replace('__ENTRY__', entry).rstrip()
+    base = (templates_dir / 'base.html').read_text(encoding='utf-8').replace('__ENTRY__', entry).rstrip()
     templates = ['base', 'dashboard', 'base_stations', 'station_detail', 'rovers', 'mountpoints', 'rtcm_settings', 'system_configuration', 'user_settings', 'logs', 'login', 'login_2fa', 'error', '404', '500', 'diagnostics', 'backups']
     for name in templates:
         content = base if name == 'base' else ("{% set error_page = true %}\n" if name in ('error', '404', '500') else '') + '{% include "base.html" %}'
@@ -92,6 +92,34 @@ def main():
         else:
             anchor = "cat > $APP/web/templates/base.html << 'EOF'\n"
             source = source.replace(anchor, marker + content + '\nEOF\n\n' + anchor, 1)
+    return source, entry
+
+
+def semantic_source(source):
+    """Ignore gzip platform metadata, but compare every asset and installer line."""
+    if START not in source or END not in source:
+        raise ValueError('Missing embedded React UI')
+    before, rest = source.split(START, 1)
+    block, after = rest.split(END, 1)
+    match = re.search(r'payload = """\n([A-Za-z0-9+/=\s]+)\n"""', block)
+    if not match:
+        raise ValueError('Missing embedded React payload')
+    files = json.loads(gzip.decompress(base64.b64decode(match[1])))
+    canonical = json.dumps(files, sort_keys=True, ensure_ascii=True)
+    return before + START + block[:match.start(1)] + canonical + block[match.end(1):] + END + after
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--check', action='store_true', help='Verify the committed installer without changing it')
+    args = parser.parse_args()
+    original = INSTALLER.read_text(encoding='utf-8')
+    source, entry = render(original, ROOT / 'frontend/dist', ROOT / 'frontend/templates')
+    if args.check:
+        if semantic_source(original) != semantic_source(source):
+            raise SystemExit('Embedded UI differs from the build; run tools/embed_frontend.py and commit the installer')
+        print('Committed React assets and templates match the build')
+        return
     with INSTALLER.open('w', encoding='utf-8', newline='\n') as output:
         output.write(source)
     print(f'Embedded React UI: {entry}; installer size {INSTALLER.stat().st_size:,} bytes')
