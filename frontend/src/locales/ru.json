@@ -697,5 +697,10 @@
   "Telegram token rejected": "Telegram отклонил токен бота",
   "Telegram access denied": "Telegram запретил отправку: проверьте чат и блокировку бота",
   "Telegram delivery failed": "Ошибка доставки в Telegram",
-  "Telegram retry limit reached": "Исчерпан лимит попыток доставки в Telegram"
+  "Telegram retry limit reached": "Исчерпан лимит попыток доставки в Telegram",
+  "Restoration replaces data and YAML settings, keeps the installed program version, stops correction streams and restarts the service. Code inside the archive is not installed. Your session may end. Only continue after field work has stopped.": "Восстановление заменяет данные и настройки YAML, сохраняет установленную версию программы, останавливает поток поправок и перезапускает службу. Код из архива не устанавливается. Ваша сессия может завершиться. Продолжайте только после окончания полевых работ.",
+  "Maintenance connection failed; check operation status before retrying": "Нет связи со службой обслуживания; перед повтором проверьте состояние операции",
+  "Maintenance failed; inspect the protected journal": "Сбой обслуживания; проверьте защищённый журнал",
+  "Maintenance action or arguments not allowed": "Команда обслуживания или её параметры запрещены",
+  "Maintenance operation timed out; inspect its status before retrying": "Время ожидания обслуживания истекло; перед повтором проверьте состояние операции"
 }

@@ -199,7 +199,7 @@ systemctl() {
     echo "systemctl $*"
     case "$1" in
         is-active) ACTIVE;;
-        reboot) return 1;;
+        reboot|poweroff) return 1;;
         *) return 0;;
     esac
 }
@@ -208,14 +208,17 @@ systemctl() {
                               input=harness + body, text=True, capture_output=True, timeout=10)
 
     def test_busy_gate_never_calls_service_manager(self):
-        result = self.execute(busy=True)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(result.stdout, '')
+        for action in ('reboot', 'shutdown'):
+            result = self.execute(action=action, busy=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, '')
 
     def test_rejected_reboot_restores_only_previously_active_service(self):
-        for active in (True, False):
-            with self.subTest(active=active):
-                result = self.execute(active=active)
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn('systemctl stop gnss-caster', result.stdout)
-                self.assertEqual('systemctl start gnss-caster' in result.stdout, active)
+        for action, command in (('reboot', 'reboot'), ('shutdown', 'poweroff')):
+            for active in (True, False):
+                with self.subTest(action=action, active=active):
+                    result = self.execute(action=action, active=active)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn('systemctl stop gnss-caster', result.stdout)
+                    self.assertIn('systemctl '+command, result.stdout)
+                    self.assertEqual('systemctl start gnss-caster' in result.stdout, active)

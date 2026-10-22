@@ -384,6 +384,16 @@ print_install_rollback_paths() {
     def test_previously_inactive_service_stays_inactive(self):
         self.assert_restored(self.run_case('exit 7', initially_active=False), 7, active=False)
 
+    def test_rollback_restores_previously_active_maintenance_socket(self):
+        result = self.run_case('exit 9', prefix=': > "$TEST_ROOT/gnss-caster-maintenance.socket.active"')
+        self.assert_restored(result, 9)
+        self.assertTrue((self.root / 'gnss-caster-maintenance.socket.active').exists())
+
+    def test_failed_first_broker_upgrade_does_not_leave_socket_running(self):
+        result = self.run_case('systemctl start gnss-caster-maintenance.socket\nexit 9')
+        self.assert_restored(result, 9)
+        self.assertFalse((self.root / 'gnss-caster-maintenance.socket.active').exists())
+
     def test_success_does_not_restore_old_files(self):
         result = self.run_case('INSTALL_COMMITTED=1\nROLLBACK_ACTIVE=0\nexit 0')
         self.assertEqual(result.returncode, 0, result.stderr)
