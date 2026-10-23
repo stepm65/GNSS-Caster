@@ -230,6 +230,9 @@ test("uploaded backup requires separate confirmation before restore", async ({
     buffer: Buffer.from("test-archive"),
   });
   await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(
+    page.getByRole("dialog").getByText(/keeps the installed program version/),
+  ).toBeVisible();
   expect(restores).toBe(0);
   expect(uploadCsrf).toBe("preview-csrf");
   await expect(

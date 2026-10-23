@@ -5,6 +5,7 @@
 - The current source of the backend and Linux scripts is the embedded code in `gnss-caster-install.sh`. Web source lives in `frontend/`; build it and run `tools/embed_frontend.py` whenever it changes.
 - The release updater is maintained in `runtime/release_update.py`; run `tools/embed_release_updater.py` after changing it. Do not edit its generated installer block directly.
 - The root-only recovery journal is maintained in `runtime/recovery.py`; run `tools/embed_recovery.py` after changing it. Keep its generated installer block consistent.
+- The maintenance broker and client are maintained in `runtime/maintenance_broker.py` and `runtime/maintenance_client.py`; run `tools/embed_maintenance.py` after changing them or their generated units.
 - Maintain English and Russian web translations; keep the Telegram language independent of the browser language. Preserve authentication, roles, CSRF and existing API behavior.
 - Run relevant tests and update `CHANGES.md`. Report local/mocked verification separately from hardware verification.
 - Publishing code does not authorize deployment, service restarts, Bluetooth scans or monitoring. Only operate a live caster when the current task authorizes it, considering ongoing field work.

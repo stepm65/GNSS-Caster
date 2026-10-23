@@ -163,6 +163,9 @@ test("Russian mobile pages fit and restore still needs the literal confirmation 
     .first()
     .click();
   await expect(
+    page.getByRole("dialog").getByText(/Код из архива не устанавливается/),
+  ).toBeVisible();
+  await expect(
     page.getByRole("button", { name: "Подтвердить", exact: true }),
   ).toBeDisabled();
   await page

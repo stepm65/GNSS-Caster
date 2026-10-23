@@ -892,7 +892,7 @@ function Backups() {
           description={
             confirm.type === "restore"
               ? t(
-                  "Restoration replaces the caster data and configuration, stops correction streams and restarts the service. Your session may end. Only continue after field work has stopped.",
+                  "Restoration replaces data and YAML settings, keeps the installed program version, stops correction streams and restarts the service. Code inside the archive is not installed. Your session may end. Only continue after field work has stopped.",
                 )
               : confirm.type === "delete"
                 ? t("This permanently deletes the selected archive.")
