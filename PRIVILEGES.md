@@ -45,6 +45,8 @@ From 3.4.0, restoration requested through the application installs the archived 
 
 Pre-restore rollback snapshots are stored below root-only `/var/backups/gnss-caster/restore-*`. This avoids placing executable rollback material in the service-writable backup directory. Release changes use the existing verified release updater. A root administrator can still use the local legacy full-restore command, which trusts the archive's code and requires independent compatibility judgment; it is not exposed through the socket.
 
+Restored configuration, including configuration returned during rollback, is staged privately and published through opened directory descriptors. Replacing a destination symlink or hard link does not write to its target. A symlink used as the instance directory or source file is rejected. This closes the configuration-copy path to overwriting a file outside the data directory. A malformed configuration snapshot is an error, not a reason to follow its links.
+
 This change does **not** yet provide a schema/version compatibility manifest, a preview of every restored setting, or an authenticated archive format. Old data may be incompatible with a newer application. The existing validation and rollback help detect failures but cannot prove semantic compatibility. R08, R10 and R12 track those remaining changes.
 
 ## Installation and recovery

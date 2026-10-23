@@ -24983,6 +24983,72 @@ verify_manifest_checksum() {
     fi
 }
 
+publish_restore_config() {
+    # Publish through directory descriptors: a service-created destination link
+    # must never redirect a root write. Keep staging inaccessible to the service.
+    python3 -I - "$1" "$INSTANCE_DIR" "$2" "$SERVICE_GROUP" << 'PY_RESTORE_CONFIG'
+import grp
+import os
+from pathlib import Path
+import shutil
+import stat
+import sys
+import tempfile
+
+
+def publish_config(source, directory, name, group):
+    if name not in ('config.yaml', 'config.py'):
+        raise ValueError('Unsupported configuration destination')
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    parent = os.open(directory, flags)
+    stage_fd = None
+    stage = None
+    identity = None
+    created = False
+    try:
+        # The fixed root restore script must own the destination directory.
+        if os.fstat(parent).st_uid != os.geteuid():
+            raise ValueError('Unsafe configuration directory')
+        stage = Path(tempfile.mkdtemp(prefix='.restore-config-', dir=directory)).name
+        stage_fd = os.open(stage, flags, dir_fd=parent)
+        identity = os.fstat(stage_fd)
+        if identity.st_uid != os.geteuid() or stat.S_IMODE(identity.st_mode) != 0o700:
+            raise ValueError('Unsafe configuration staging directory')
+        fd = os.open('value', os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=stage_fd)
+        created = True
+        with os.fdopen(fd, 'wb') as output, os.fdopen(os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), 'rb') as input_file:
+            if not stat.S_ISREG(os.fstat(input_file.fileno()).st_mode):
+                raise ValueError('Configuration source must be a regular file')
+            shutil.copyfileobj(input_file, output)
+            output.flush()
+            os.fchown(output.fileno(), -1, grp.getgrnam(group).gr_gid)
+            os.fchmod(output.fileno(), 0o640)
+            os.fsync(output.fileno())
+        os.replace('value', name, src_dir_fd=stage_fd, dst_dir_fd=parent)
+        os.fsync(parent)
+    finally:
+        if stage_fd is not None:
+            if created:
+                try:
+                    os.unlink('value', dir_fd=stage_fd)
+                except FileNotFoundError:
+                    pass
+            os.close(stage_fd)
+        if stage is not None and identity is not None:
+            try:
+                current = os.stat(stage, dir_fd=parent, follow_symlinks=False)
+                if (current.st_dev, current.st_ino) == (identity.st_dev, identity.st_ino):
+                    os.rmdir(stage, dir_fd=parent)
+            except FileNotFoundError:
+                pass
+        os.close(parent)
+
+
+if __name__ == '__main__':
+    publish_config(*sys.argv[1:])
+PY_RESTORE_CONFIG
+}
+
 restore_previous_state() {
     local rollback_failed=0
 
@@ -25015,7 +25081,7 @@ restore_previous_state() {
             if [ "$rollback_file" = "db.sqlite" ]; then
                 sqlite_database_tool restore "$ROLLBACK_DIR/$rollback_file" "$INSTANCE_DIR/$rollback_file" || rollback_failed=1
             else
-                cp -a "$ROLLBACK_DIR/$rollback_file" "$INSTANCE_DIR/$rollback_file" || rollback_failed=1
+                publish_restore_config "$ROLLBACK_DIR/$rollback_file" "$rollback_file" || rollback_failed=1
             fi
         elif [ -f "$ROLLBACK_DIR/.$rollback_file.missing" ]; then
             rm -f "$INSTANCE_DIR/$rollback_file" || rollback_failed=1
@@ -25266,12 +25332,12 @@ else
 fi
 
 if [ -f "$RESTORE_DIR/config.yaml" ]; then
-    cp "$RESTORE_DIR/config.yaml" "$INSTANCE_DIR/config.yaml"
+    publish_restore_config "$RESTORE_DIR/config.yaml" config.yaml
     log "config.yaml restored"
 fi
 
 if [ "$RESTORE_DATA_ONLY" -eq 0 ] && [ -f "$RESTORE_DIR/config.py" ]; then
-    cp "$RESTORE_DIR/config.py" "$INSTANCE_DIR/config.py"
+    publish_restore_config "$RESTORE_DIR/config.py" config.py
     log "config.py restored"
 fi
 

@@ -121,6 +121,39 @@ class PolicyTests(unittest.TestCase):
 
 @unittest.skipUnless(os.name == 'posix', 'Linux credentials and process groups')
 class PosixTests(unittest.TestCase):
+    def test_config_publication_replaces_links_without_writing_their_targets(self):
+        import grp
+        ns = {'__name__': 'restore_config_test'}
+        code = SOURCE.split("<< 'PY_RESTORE_CONFIG'\n", 1)[1].split('\nPY_RESTORE_CONFIG', 1)[0]
+        exec(compile(code, '<restore-config>', 'exec'), ns)
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            instance = base / 'instance'
+            instance.mkdir(mode=0o770)
+            source, victim = base/'source', base/'outside'
+            source.write_text('new settings')
+            victim.write_text('original code')
+            for link in ('symlink', 'hardlink'):
+                target = instance/'config.yaml'
+                if link == 'symlink': target.symlink_to(victim)
+                else: os.link(victim, target)
+                ns['publish_config'](source, instance, 'config.yaml', grp.getgrgid(os.getgid()).gr_name)
+                self.assertEqual(victim.read_text(), 'original code')
+                self.assertFalse(target.is_symlink())
+                self.assertEqual(target.read_text(), 'new settings')
+                self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o640)
+                self.assertEqual(list(instance.glob('.restore-config-*')), [])
+                target.unlink()
+            (base/'redirect').symlink_to(instance, target_is_directory=True)
+            with self.assertRaises(OSError):
+                ns['publish_config'](source, base/'redirect', 'config.yaml', grp.getgrgid(os.getgid()).gr_name)
+            (base/'source-link').symlink_to(victim)
+            with self.assertRaises(OSError):
+                ns['publish_config'](base/'source-link', instance, 'config.yaml', grp.getgrgid(os.getgid()).gr_name)
+            self.assertFalse((instance/'config.yaml').exists())
+            self.assertEqual(victim.read_text(), 'original code')
+            self.assertEqual(list(instance.glob('.restore-config-*')), [])
+
     def test_socketpair_uses_real_peer_credentials(self):
         left, right = socket.socketpair()
         with left, right, patch.object(broker, 'execute') as execute:
@@ -238,6 +271,7 @@ printf archive > "$TMP_DIR/staged-app/app/code.py"
 printf archive > "$RESTORE_DIR/config.py"
 log() { :; }
 error() { echo "$*" >&2; }
+publish_restore_config() { cp "$1" "$INSTANCE_DIR/$2"; }
 rm() {
   for arg in "$@"; do case "$arg" in -*) ;; "$TEST_ROOT"/*) ;; *) exit 99;; esac; done
   command rm "$@"
