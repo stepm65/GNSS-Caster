@@ -22,7 +22,7 @@ SCRIPT = Path(__file__).resolve().parents[1] / 'gnss-caster-install.sh'
 SOURCE = SCRIPT.read_text(encoding='utf-8')
 FACTORY = SOURCE.split("cat > $APP/web/factory.py << 'EOF'\n", 1)[1].split('\nEOF\n', 1)[0]
 TREE = ast.parse(FACTORY)
-EXTRACTOR = SOURCE.split("<< 'PY_SAFE_ARCHIVE'\n", 1)[1].split('\nPY_SAFE_ARCHIVE\n', 1)[0]
+EXTRACTOR = (SCRIPT.parent / 'runtime/backup_format.py').read_text(encoding='utf-8')
 
 
 def load_function(name, namespace):

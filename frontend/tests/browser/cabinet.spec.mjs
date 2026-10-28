@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { fixture } from "../fixtures.mjs";
+import { backupPreview } from "../backup-preview.mjs";
 
 const pages = [
   ["/dashboard", "Overview"],
@@ -185,11 +186,15 @@ test("secret settings are omitted unless explicitly replaced", async ({
   expect(payload).toEqual({ telegram_chat_id: "-100987654" });
 });
 
-test("field work protection is saved explicitly in general settings", async ({ page }) => {
+test("field work protection is saved explicitly in general settings", async ({
+  page,
+}) => {
   let payload;
   await page.route("**/api/system/settings/update", (route) => {
     payload = route.request().postDataJSON();
-    return route.fulfill({ json: { message: "System settings updated", applied: {} } });
+    return route.fulfill({
+      json: { message: "System settings updated", applied: {} },
+    });
   });
   await page.goto("/system_configuration");
   await page.getByLabel("Field work in progress — block maintenance").check();
@@ -202,6 +207,13 @@ test("uploaded backup requires separate confirmation before restore", async ({
 }) => {
   let restores = 0,
     uploadCsrf;
+  await page.route("**/api/system/backups/preview", (route) => {
+    expect(route.request().headers()["x-csrf-token"]).toBe("preview-csrf");
+    expect(route.request().postDataJSON().passphrase).toBe(
+      "archive-passphrase",
+    );
+    return route.fulfill({ json: backupPreview });
+  });
   await page.route("**/api/system/backups/upload", (route) => {
     uploadCsrf = route.request().headers()["x-csrf-token"];
     return route.fulfill({
@@ -214,6 +226,7 @@ test("uploaded backup requires separate confirmation before restore", async ({
     expect(route.request().postDataJSON()).toEqual({
       filename: "backup_from_telegram.tar.gz.enc",
       passphrase: "archive-passphrase",
+      archive_sha256: backupPreview.archive_sha256,
     });
     return route.fulfill({
       status: 202,
@@ -239,6 +252,12 @@ test("uploaded backup requires separate confirmation before restore", async ({
     page.getByRole("button", { name: "Confirm", exact: true }),
   ).toBeDisabled();
   await page.getByLabel("Backup passphrase").fill("archive-passphrase");
+  await page
+    .getByRole("button", { name: "Inspect backup", exact: true })
+    .click();
+  await expect(
+    page.getByText("Compatible with this installation", { exact: true }),
+  ).toBeVisible();
   await page.getByLabel("Type RESTORE to confirm").fill("RESTORE");
   await page.getByRole("button", { name: "Confirm", exact: true }).click();
   await expect.poll(() => restores).toBe(1);

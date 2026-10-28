@@ -38,7 +38,7 @@ def validate_request(request):
     if not isinstance(request, dict) or set(request) != {'version', 'args'} or type(request['version']) is not int or request['version'] != 1:
         raise Rejected('Unsupported maintenance protocol')
     args = request['args']
-    if not isinstance(args, list) or not 1 <= len(args) <= 5 or any(
+    if not isinstance(args, list) or not 1 <= len(args) <= 6 or any(
             not isinstance(a, str) or not a or len(a) > 255 or any(ord(c) < 32 for c in a) for a in args):
         raise Rejected('Invalid maintenance arguments')
     action, rest = args[0], args[1:]
@@ -76,10 +76,12 @@ def validate_request(request):
     elif action == 'systemd-job':
         if len(rest) == 2 and rest[0] == 'backup':
             valid = unit('backup', rest[1])
-        elif len(rest) in (3, 4) and rest[0] == 'restore':
-            valid = unit('restore', rest[1]) and matches(rest[2], r'backup_[A-Za-z0-9_-]{1,180}\.tar\.gz(?:\.enc)?')
-            if len(rest) == 4:
-                valid = valid and matches(rest[3], r'/run/gnss-caster/restore-[0-9a-f]{16}\.key')
+        elif 3 <= len(rest) <= 5 and rest[0] == 'restore':
+            valid = unit('restore', rest[1]) and matches(rest[2], r'backup_[A-Za-z0-9_.-]{1,180}\.tar\.gz(?:\.enc)?') and '..' not in rest[2]
+            options = rest[3:]
+            keys = [a for a in options if matches(a, r'/run/gnss-caster/restore-[0-9a-f]{16}\.key')]
+            hashes = [a for a in options if matches(a, r'sha256:[0-9a-f]{64}')]
+            valid = valid and len(keys) <= 1 and len(hashes) <= 1 and len(keys) + len(hashes) == len(options)
         # Never let IPC select executable restoration. Only root's local helper
         # can request legacy full restoration; releases use a separate verifier.
         if valid and rest[0] == 'restore':
