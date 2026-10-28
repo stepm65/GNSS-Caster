@@ -1,5 +1,6 @@
 import { t } from "../i18n";
 import Updates from "./Updates";
+import RestoreBackup from "./RestoreBackup";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -886,21 +887,27 @@ function Backups() {
           </Panel>
         </GridBox>
       </Box>
-      {confirm && (
+      {confirm?.type === "restore" && (
+        <RestoreBackup
+          filename={confirm.filename}
+          onClose={() => setConfirm(null)}
+          onStarted={(result) => {
+            rememberJob(result);
+            action.setNotice({ severity: "info", text: result.message });
+            backups.refresh();
+          }}
+        />
+      )}
+      {confirm && confirm.type !== "restore" && (
         <Confirm
           title={t("{0} backup?", [label(confirm.type)])}
           description={
-            confirm.type === "restore"
-              ? t(
-                  "Restoration replaces data and YAML settings, keeps the installed program version, stops correction streams and restarts the service. Code inside the archive is not installed. Your session may end. Only continue after field work has stopped.",
+            confirm.type === "delete"
+              ? t("This permanently deletes the selected archive.")
+              : t(
+                  "Checks whether this archive can be read. Restoration performs additional checks before replacing any data.",
                 )
-              : confirm.type === "delete"
-                ? t("This permanently deletes the selected archive.")
-                : t(
-                    "Checks whether this archive can be read. Restoration performs additional checks before replacing any data.",
-                  )
           }
-          word={confirm.type === "restore" ? "RESTORE" : undefined}
           password={
             confirm.type !== "delete" && confirm.filename?.endsWith(".enc")
           }

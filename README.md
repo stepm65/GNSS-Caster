@@ -2,7 +2,7 @@
 
 NTRIP caster and receiver management for Raspberry Pi and Linux, with an English/Russian React + Material UI web cabinet.
 
-**Current source version: 3.4.0.** Release publication, deployment on the reference Raspberry Pi and validation with a live receiver remain separate steps. See the [implementation progress](IMPLEMENTATION.md), [product review](PRODUCT_REVIEW.md) and [3.3.0 validation](validation/audit/REPORT.md).
+**Current source version: 3.4.1.** Release publication, deployment on the reference Raspberry Pi and validation with a live receiver remain separate steps. See the [implementation progress](IMPLEMENTATION.md), [product review](PRODUCT_REVIEW.md) and [3.3.0 validation](validation/audit/REPORT.md).
 
 ![GNSS Caster overview with sample data](validation/ui/overview-desktop.png)
 
@@ -12,7 +12,7 @@ NTRIP caster and receiver management for Raspberry Pi and Linux, with an English
 - Bluetooth/BLE and serial receiver configuration, status, console and command history.
 - Base coordinates, site points, receiver configuration versions and RTCM presets.
 - Separate overview, diagnostics and event-log pages.
-- Backup creation, file upload, verification, download and explicitly confirmed data restore, including encrypted archives; web restoration keeps the installed application code.
+- Backup creation, file upload, verification, download and explicitly confirmed data restore, including encrypted archives; web restoration keeps the installed application code and checks schema/version compatibility before stopping the service. See [backup inspection and recovery](BACKUPS.md).
 - Accounts, roles, two-factor authentication and API tokens.
 - English/Russian interface, Telegram bot with its own language setting, light/dark themes and a responsive layout.
 - A standalone installer with pinned Python dependencies, systemd/nginx configuration and rollback support for maintenance operations.
@@ -67,7 +67,7 @@ cd ..
 python tools/embed_frontend.py
 ```
 
-The release helper has its own source in `runtime/release_update.py`; after edits run `python tools/embed_release_updater.py`. The recovery journal is in `runtime/recovery.py`, embedded with `python tools/embed_recovery.py`. The maintenance broker/client are in `runtime/maintenance_broker.py` and `runtime/maintenance_client.py`, embedded with `python tools/embed_maintenance.py`. Commit the source and generated installer together; each tool supports `--check`.
+The release helper has its own source in `runtime/release_update.py`; after edits run `python tools/embed_release_updater.py`. The recovery journal is in `runtime/recovery.py`, embedded with `python tools/embed_recovery.py`. The maintenance broker/client are in `runtime/maintenance_broker.py` and `runtime/maintenance_client.py`, embedded with `python tools/embed_maintenance.py`. Backup format/compatibility logic is in `runtime/backup_format.py`, embedded with `python tools/embed_backup_format.py`. Commit the source and generated installer together; each tool supports `--check`.
 
 Use Node.js 22.12+ and pnpm 11.25.0. See the [frontend guide](frontend/README.md) for local preview and browser tests. The preview uses sample data and rejects writes; it does not connect to an operational caster.
 

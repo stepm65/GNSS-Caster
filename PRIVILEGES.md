@@ -20,7 +20,7 @@ The main service, including its compatibility fallback, uses `NoNewPrivileges=ye
 | Bluetooth | Unblock, RFCOMM bind/release on channels 1–30, RSSI for a MAC, existing controller recovery procedures |
 | Time | Set a valid timestamp with the existing clock policy |
 | Releases | Check/status; install a stable numeric tag with its expected SHA-256, subject to the release helper's verification |
-| Backups | Start the fixed backup script; restore a validated backup filename, optionally with a fixed-format protected key-file path |
+| Backups | Start the fixed backup script; restore a validated backup filename, optionally with a fixed-format protected key-file path and expected archive SHA-256 |
 | Configuration | Log retention 1–3650 days; enable/disable backup schedule with interval 3600–604800 seconds |
 | Certificates | Inspect the fixed local certificate or constrained Let's Encrypt paths; invoke the fixed renewal procedure |
 | Service/host | Delayed caster restart, reboot or shutdown; existing maintenance/admission locks and field-work checks apply |
@@ -47,7 +47,7 @@ Pre-restore rollback snapshots are stored below root-only `/var/backups/gnss-cas
 
 Restored configuration, including configuration returned during rollback, is staged privately and published through opened directory descriptors. Replacing a destination symlink or hard link does not write to its target. A symlink used as the instance directory or source file is rejected. This closes the configuration-copy path to overwriting a file outside the data directory. A malformed configuration snapshot is an error, not a reason to follow its links.
 
-This change does **not** yet provide a schema/version compatibility manifest, a preview of every restored setting, or an authenticated archive format. Old data may be incompatible with a newer application. The existing validation and rollback help detect failures but cannot prove semantic compatibility. R08, R10 and R12 track those remaining changes.
+Since 3.4.1, [backup inspection](BACKUPS.md) adds a schema/version compatibility manifest, component preview and mandatory root-side validation before service stop. It uses a conservative schema match and binds the scheduled operation to the inspected archive digest. It does not authenticate the archive creator, migrate arbitrary older schemas or prove semantic correctness of every setting; R10 and R12 track that remaining work.
 
 ## Installation and recovery
 

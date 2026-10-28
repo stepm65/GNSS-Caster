@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { backupPreview } from "../backup-preview.mjs";
 
 const pages = [
   ["/dashboard", "Обзор"],
@@ -144,6 +145,9 @@ test("Telegram language saves independently from browser language", async ({
 test("Russian mobile pages fit and restore still needs the literal confirmation word", async ({
   page,
 }) => {
+  await page.route("**/api/system/backups/preview", (route) =>
+    route.fulfill({ json: backupPreview }),
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => localStorage.setItem("gnss_language", "ru"));
   await page.goto("/dashboard");
@@ -178,4 +182,11 @@ test("Russian mobile pages fit and restore still needs the literal confirmation 
   await expect(
     page.getByRole("button", { name: "Подтвердить", exact: true }),
   ).toBeEnabled();
+  const dialogFits = await page
+    .getByRole("dialog")
+    .evaluate((element) => element.scrollWidth <= element.clientWidth);
+  expect(dialogFits).toBeTruthy();
+  await page.screenshot({
+    path: test.info().outputPath("restore-preview-ru.png"),
+  });
 });

@@ -60,7 +60,7 @@ class UploadTests(unittest.TestCase):
     def test_nginx_patch_preserves_tls_and_is_idempotent(self):
         code=SOURCE.split("<< 'PY_UPLOAD_NGINX'\n",1)[1].split('\nPY_UPLOAD_NGINX\n',1)[0]
         cfg=self.root/'nginx.conf'
-        cfg.write_text('server {\n listen 443 ssl;\n ssl_certificate /safe/cert;\n location /api/ {\n proxy_pass http://127.0.0.1:8080;\n }\n}\n')
+        cfg.write_text('server {\n listen 443 ssl;\n ssl_certificate /safe/cert;\n location /api/ {\n proxy_pass http://127.0.0.1:8080;\n proxy_read_timeout 60s;\n }\n}\n')
         import sys
         with patch.object(sys,'argv',['patch',str(cfg)]):
             exec(code,{});first=cfg.read_text();exec(code,{})
@@ -68,5 +68,12 @@ class UploadTests(unittest.TestCase):
         self.assertEqual(first.count('location = /api/system/backups/upload'),1)
         self.assertIn('ssl_certificate /safe/cert;',first)
         self.assertIn('client_max_body_size 129m;',first)
+        for action in ('preview','restore','verify'):
+            self.assertEqual(first.count('location = /api/system/backups/'+action),1)
+            block=first.split('location = /api/system/backups/'+action+' {',1)[1].split('}',1)[0]
+            self.assertIn('proxy_read_timeout 300s;',block)
+            self.assertNotIn('proxy_read_timeout 60s;',block)
+            self.assertIn('proxy_pass http://127.0.0.1:8080;',block)
+        self.assertIn('proxy_read_timeout 60s;',first.split('location /api/ {',1)[1])
 
 if __name__=='__main__': unittest.main()

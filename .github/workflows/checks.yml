@@ -31,6 +31,7 @@ jobs:
           python tools/embed_release_updater.py --check
           python tools/embed_recovery.py --check
           python tools/embed_maintenance.py --check
+          python tools/embed_backup_format.py --check
       - name: Run backend and installer regressions
         run: python -m unittest discover -s tests -v
 
