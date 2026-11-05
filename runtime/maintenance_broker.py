@@ -19,7 +19,9 @@ import time
 import uuid
 
 HELPER = Path('/opt/gnss-caster/gnss-caster-privileged-helper.sh')
-AUDIT = Path('/var/log/gnss-caster-maintenance')
+# /var/log may legitimately be group-writable (root:syslog 0775 on Ubuntu).
+# Keep the privileged audit under a root-controlled parent without relaxing trust.
+AUDIT = Path('/var/lib/gnss-caster-maintenance')
 MAX_REQUEST = 8192
 MAX_OUTPUT = 131072
 READ_ONLY = {'ping', 'release-status', 'systemctl-is-active', 'read-rssi', 'certificate-info'}
@@ -46,7 +48,7 @@ def validate_request(request):
     mac = lambda v: matches(v, r'(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}')
     number = lambda v, low, high: matches(v, r'[0-9]{1,7}') and low <= int(v) <= high
     unit = lambda kind, v: matches(v, r'gnss-caster-' + kind + r'-[0-9]{1,12}(?:-[0-9a-f]{4})?\.service')
-    if action in ('ping', 'release-status', 'release-check', 'rfkill-unblock-bluetooth', 'recover-bluetooth', 'restart-service', 'reboot-host'):
+    if action in ('ping', 'check-maintenance', 'release-status', 'release-check', 'rfkill-unblock-bluetooth', 'recover-bluetooth', 'restart-service', 'reboot-host'):
         valid = not rest
         timeout = 120 if action == 'release-check' else 60
     elif action == 'release-install':
@@ -226,6 +228,11 @@ def handle(conn, allowed_uid):
             audit(dict(record, phase='accepted'))
         if args == ['ping']:
             response = {'returncode': 0, 'stdout': 'maintenance protocol 1', 'stderr': ''}
+        elif args == ['check-maintenance']:
+            # Exercise durable audit plus helper trust without running an action.
+            trusted(HELPER.parent, directory=True)
+            trusted(HELPER)
+            response = {'returncode': 0, 'stdout': 'maintenance ready', 'stderr': ''}
         else:
             response = execute(args, timeout, request_id)
         if needs_audit:
