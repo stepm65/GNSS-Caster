@@ -29,7 +29,7 @@ client = module('maintenance_client')
 class PolicyTests(unittest.TestCase):
     def test_allowlist_covers_current_callers(self):
         for args in [
-            ['ping'], ['release-check'], ['release-status'], ['release-install', 'v3.4.0', 'a'*64],
+            ['ping'], ['check-maintenance'], ['release-check'], ['release-status'], ['release-install', 'v3.4.0', 'a'*64],
             ['rfkill-unblock-bluetooth'], ['systemctl-is-active', 'bluetooth'], ['systemctl-start','bluetooth'],
             ['rfcomm-bind','1','AA:BB:CC:DD:EE:FF','30'], ['rfcomm-release','1'],
             ['read-rssi','AA:BB:CC:DD:EE:FF'], ['recover-bluetooth'], ['recover-bluetooth-deep'],
@@ -79,6 +79,36 @@ class PolicyTests(unittest.TestCase):
             with self.assertRaises(broker.Rejected): broker.trusted(path)
         path.lstat.return_value = Mock(st_uid=0, st_mode=stat.S_IFREG|0o700, st_nlink=1)
         broker.trusted(path)
+
+    def test_audit_uses_root_controlled_state_parent(self):
+        self.assertEqual(broker.AUDIT, Path('/var/lib/gnss-caster-maintenance'))
+        parent = Mock()
+        for mode in (0o775, 0o777):
+            parent.lstat.return_value = Mock(st_uid=0, st_mode=stat.S_IFDIR | mode)
+            with self.assertRaises(broker.Rejected):
+                broker.trusted(parent, directory=True)
+        parent.lstat.return_value = Mock(st_uid=0, st_mode=stat.S_IFDIR | 0o755)
+        broker.trusted(parent, directory=True)
+
+    def test_readiness_requires_durable_audit_and_helper_trust_without_execution(self):
+        for failure in (None, 'audit', 'helper'):
+            with self.subTest(failure=failure):
+                conn = Mock()
+                conn.getsockopt.return_value = struct.pack('3i', 123, 1001, 1001)
+                with patch.object(socket, 'SO_PEERCRED', 17, create=True), patch.object(
+                        broker, 'read_request', return_value={'version':1,'args':['check-maintenance']}), patch.object(
+                        broker, 'audit', side_effect=OSError('disk full') if failure == 'audit' else None) as audit, patch.object(
+                        broker, 'trusted', side_effect=broker.Rejected('Unsafe maintenance file permissions') if failure == 'helper' else None) as trusted, patch.object(broker, 'execute') as execute:
+                    broker.handle(conn, 1001)
+                    execute.assert_not_called()
+                reply = json.loads(conn.sendall.call_args.args[0])
+                self.assertEqual(reply['returncode'], 0 if failure is None else 1)
+                if failure is None:
+                    self.assertEqual(reply['stdout'], 'maintenance ready')
+                    self.assertEqual([c.args[0]['phase'] for c in audit.call_args_list], ['accepted', 'finished'])
+                    self.assertEqual(trusted.call_count, 2)
+                if failure == 'audit':
+                    trusted.assert_not_called()
 
     def test_duplicate_fields_and_oversize_requests_rejected(self):
         for raw in (b'{"version":1,"version":1,"args":["ping"]}', b'x'*8193):
@@ -238,6 +268,7 @@ class PackagingTests(unittest.TestCase):
         self.assertIn('"$BASE/maintenance-broker.py" \\', bash_function('print_install_rollback_paths'))
         self.assertIn('gnss-caster-maintenance.socket', bash_function('restore_install_rollback_snapshot'))
         self.assertIn('chmod 750 "$LOG_DIR"', bash_function('set_runtime_permissions'))
+        self.assertIn("module.run(['check-maintenance'], timeout=10)", bash_function('verify_maintenance_socket'))
         self.assertNotIn('chmod 770 "$BACKUP_DIR" "$LOG_DIR"', SOURCE)
 
     @unittest.skipUnless(shutil.which('systemd-analyze'), 'systemd unit validator')

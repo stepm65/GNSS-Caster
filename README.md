@@ -2,7 +2,7 @@
 
 NTRIP caster and receiver management for Raspberry Pi and Linux, with an English/Russian React + Material UI web cabinet.
 
-**Current source version: 3.4.1.** Release publication, deployment on the reference Raspberry Pi and validation with a live receiver remain separate steps. See the [implementation progress](IMPLEMENTATION.md), [product review](PRODUCT_REVIEW.md) and [3.3.0 validation](validation/audit/REPORT.md).
+**Current source version: 3.4.1.** Upgraded and checked on the reference Raspberry Pi 4 on 2026-11-04, with the base station switched off. Settings preservation, web services and isolated authentication/upload checks passed; live corrections, restore/rollback and web-driven release installation still require hardware validation. See the [repair validation record](REPAIR_TEST_PLAN.md), [implementation progress](IMPLEMENTATION.md), [product review](PRODUCT_REVIEW.md) and [3.3.0 local validation](validation/audit/REPORT.md).
 
 ![GNSS Caster overview with sample data](validation/ui/overview-desktop.png)
 
