@@ -23,6 +23,26 @@ NTRIP caster and receiver management for Raspberry Pi and Linux, with an English
 
 The target is Linux with systemd and Python 3.11+: Raspberry Pi OS, Debian, or Ubuntu 24.04/26.04. Receiver and operating-system compatibility must be checked on the target hardware.
 
+### One command from a GitHub release
+
+Run as root. The same command installs GNSS Caster on a fresh machine and updates an existing installation:
+
+```sh
+sudo bash -c 'bash <(curl -Ls https://raw.githubusercontent.com/stepm65/GNSS-Caster/main/install.sh)'
+```
+
+It downloads `gnss-caster-install.sh` from the latest published release, checks it against the `SHA256SUMS` published next to it and against the release version, then runs `install` on a fresh machine or `--repair` (the transactional update) on an existing one. A newer installed version is not replaced without `--allow-downgrade`. Other forms:
+
+```sh
+bash <(curl -Ls .../install.sh) v3.5.0          # a specific release
+bash <(curl -Ls .../install.sh) -- --status     # run another installer mode with the latest release
+bash <(curl -Ls .../install.sh) dev-latest      # installer from main, unverified: test stands only
+```
+
+Releases are published from Git tags; see [releases](UPDATES.md#выпуск-новой-версии). Installations from 3.3.0 on can also update from the web cabinet.
+
+### From a clone
+
 ```sh
 git clone https://github.com/stepm65/GNSS-Caster.git
 cd GNSS-Caster
