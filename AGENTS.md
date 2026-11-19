@@ -8,6 +8,7 @@
 - The maintenance broker and client are maintained in `runtime/maintenance_broker.py` and `runtime/maintenance_client.py`; run `tools/embed_maintenance.py` after changing them or their generated units.
 - Backup format and compatibility checks are maintained in `runtime/backup_format.py`; run `tools/embed_backup_format.py` after changing it.
 - Maintain English and Russian web translations; keep the Telegram language independent of the browser language. Preserve authentication, roles, CSRF and existing API behavior.
+- Releases are published by pushing a `vX.Y.Z` tag on `main` (`.github/workflows/release.yml`, `tools/publish_release.py`); `install.sh` installs or updates from the latest release. Never replace files of a published release; release fixes under a new version.
 - Run relevant tests and update `CHANGES.md`. Report local/mocked verification separately from hardware verification.
 - Publishing code does not authorize deployment, service restarts, Bluetooth scans or monitoring. Only operate a live caster when the current task authorizes it, considering ongoing field work.
 - Do not commit credentials, runtime databases, backup archives or private field logs. Do not remove local-only records to tidy the checkout.

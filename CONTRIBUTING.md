@@ -8,6 +8,7 @@ The canonical repository is https://github.com/stepm65/GNSS-Caster.
    For the release updater, edit `runtime/release_update.py` and run `python tools/embed_release_updater.py`.
 4. Run checks appropriate to the change, update `CHANGES.md` and describe behavior, verification and remaining limitations in a pull request.
 5. Merge after review and passing checks. Deploy to operating equipment separately, with an appropriate maintenance window and backup.
+6. To release, bump `CASTER_VERSION` and `frontend/package.json`, add the `## X.Y.Z` section to `CHANGES.md`, merge, then push the tag `vX.Y.Z` on that `main` commit. The Release workflow checks and publishes it; see `UPDATES.md`. Published release files are never replaced: fix forward with a new version.
 
 Maintain English and Russian interface translations and an independent Telegram language setting. Preserve existing routes, API contracts, role checks and CSRF protection unless a change explicitly requires otherwise. Hardware recovery, installation and restore operations need particular care because they can interrupt correction delivery.
 
