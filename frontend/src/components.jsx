@@ -221,6 +221,7 @@ export function Metric({ label: name, value, caption, icon }) {
         variant="h3"
         sx={{
           my: 1,
+          fontFamily: (theme) => theme.typography.fontFamilyMono,
           fontVariantNumeric: "tabular-nums",
           fontSize: {
             xs: String(value ?? "").length > 8 ? "1.2rem" : "1.75rem",

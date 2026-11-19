@@ -778,5 +778,11 @@
   "Backup must be a regular file": "Копия должна быть обычным файлом",
   "Encrypted backup requires its passphrase for verification": "Для проверки зашифрованной копии нужен её пароль",
   "Backup passphrase is invalid": "Недопустимый пароль копии",
-  "Encrypted backup could not be decrypted with the supplied/current passphrase": "Не удалось расшифровать копию указанным или сохранённым паролем"
+  "Encrypted backup could not be decrypted with the supplied/current passphrase": "Не удалось расшифровать копию указанным или сохранённым паролем",
+  "Fonts": "Шрифты",
+  "Interface font": "Шрифт интерфейса",
+  "Monospace font": "Моноширинный шрифт",
+  "System default": "Системный",
+  "Not installed on this device": "Не установлен на этом устройстве",
+  "Used when installed on this device": "Используется, если установлен на устройстве"
 }
