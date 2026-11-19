@@ -33,10 +33,12 @@ test("font choices apply at once and persist per browser", async ({ page }) => {
   const menu = page.getByRole("menu", { name: "Fonts" });
   await expect(menu.getByText("Interface font")).toBeVisible();
   await expect(menu.getByText("Monospace font")).toBeVisible();
-  // Proprietary fonts are never bundled; test browsers do not have them.
+  // SF Mono is never bundled; the Linux test browser does not have it.
   await expect(
-    menu.getByRole("menuitemradio", { name: /Anthropic Sans/ }),
+    menu.getByRole("menuitemradio", { name: /^SF Mono/ }),
   ).toContainText("Not installed on this device");
+  await expect(menu.getByRole("menuitemradio")).toHaveCount(6);
+  await expect(menu).not.toContainText("Anthropic");
   await menu.getByRole("menuitemradio", { name: /^Jura/ }).click();
   await expect.poll(() => bodyFont(page)).toMatch(/^"?Jura"?,/);
   // The menu stays open so both fonts can be chosen in one visit.

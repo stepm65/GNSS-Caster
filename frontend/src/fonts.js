@@ -5,9 +5,9 @@
 // because the installer embeds text assets only and the CSP allows
 // font-src data:. Only the chosen families are downloaded.
 //
-// SF Mono (Apple) and Anthropic Sans are proprietary and are never bundled or
-// served by the caster. They are used only when already installed on the
-// viewer's device; otherwise the browser falls back to the next font.
+// SF Mono (Apple) is proprietary and is never bundled or served by the
+// caster. It is used only when already installed on the viewer's device
+// (usual on macOS and iOS); otherwise the browser falls back to the next font.
 
 const UI_FALLBACK =
   '"Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -26,12 +26,6 @@ export const uiFonts = [
     label: "Jura",
     family: '"Jura"',
     load: () => import("./fonts/jura.js"),
-  },
-  {
-    id: "anthropic",
-    label: "Anthropic Sans",
-    family: '"Anthropic Sans"',
-    local: true,
   },
   { id: "system", label: "System default", family: "", system: true },
 ];

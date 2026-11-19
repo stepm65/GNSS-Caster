@@ -43,4 +43,4 @@ Werkzeug обновлён до 3.1.9 с пересчётом хешей и пр�
 
 ## Шрифты веб-кабинета, 3.5.0
 
-`@fontsource-variable/exo-2`, `@fontsource-variable/jura` и `@fontsource-variable/jetbrains-mono` 5.3.0 (SIL OFL 1.1) закреплены в `frontend/pnpm-lock.yaml`. Из каждого пакета в сборку попадают только латинский и кириллический WOFF2-файлы переменной насыщенности, встроенные как data-URI в отдельные модули. SF Mono и Anthropic Sans не являются зависимостями: проект их не содержит и использует только установленные у зрителя.
+`@fontsource-variable/exo-2`, `@fontsource-variable/jura` и `@fontsource-variable/jetbrains-mono` 5.3.0 (SIL OFL 1.1) закреплены в `frontend/pnpm-lock.yaml`. Из каждого пакета в сборку попадают только латинский и кириллический WOFF2-файлы переменной насыщенности, встроенные как data-URI в отдельные модули. SF Mono не является зависимостью: проект его не содержит и использует только установленный у зрителя.
