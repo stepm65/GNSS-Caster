@@ -2,7 +2,7 @@
 
 NTRIP caster and receiver management for Raspberry Pi and Linux, with an English/Russian React + Material UI web cabinet.
 
-**Current source version: 3.4.1.** Upgraded and checked on the reference Raspberry Pi 4 on 2026-11-04, with the base station switched off. Settings preservation, web services and isolated authentication/upload checks passed; live corrections, restore/rollback and web-driven release installation still require hardware validation. See the [repair validation record](REPAIR_TEST_PLAN.md), [implementation progress](IMPLEMENTATION.md), [product review](PRODUCT_REVIEW.md) and [3.3.0 local validation](validation/audit/REPORT.md).
+**Current source version: 3.5.0** (font choice and RU | EN language switch; not yet checked on the device). Version 3.4.1 was upgraded and checked on the reference Raspberry Pi 4 on 2026-11-04, with the base station switched off. Settings preservation, web services and isolated authentication/upload checks passed; live corrections, restore/rollback and web-driven release installation still require hardware validation. See the [repair validation record](REPAIR_TEST_PLAN.md), [implementation progress](IMPLEMENTATION.md), [product review](PRODUCT_REVIEW.md) and [3.3.0 local validation](validation/audit/REPORT.md).
 
 ![GNSS Caster overview with sample data](validation/ui/overview-desktop.png)
 
@@ -14,7 +14,7 @@ NTRIP caster and receiver management for Raspberry Pi and Linux, with an English
 - Separate overview, diagnostics and event-log pages.
 - Backup creation, file upload, verification, download and explicitly confirmed data restore, including encrypted archives; web restoration keeps the installed application code and checks schema/version compatibility before stopping the service. See [backup inspection and recovery](BACKUPS.md).
 - Accounts, roles, two-factor authentication and API tokens.
-- English/Russian interface, Telegram bot with its own language setting, light/dark themes and a responsive layout.
+- English/Russian interface with an RU | EN switch, Telegram bot with its own language setting, light/dark themes, a choice of interface and monospace fonts, and a responsive layout.
 - A standalone installer with pinned Python dependencies, systemd/nginx configuration and rollback support for maintenance operations.
 - Administrator-confirmed stable GitHub release updates from the web cabinet, with integrity checks, persistent job status and repair rollback.
 - Separate privileged maintenance service with validated requests and a protected audit log; the web service cannot gain privileges through executable launches.
@@ -71,7 +71,7 @@ After installing 3.3.0 or later, use **System settings → Updates** to check pu
 
 ## Languages
 
-Choose **English** or **Русский** in the header or on the sign-in page. The browser remembers this choice; switching languages keeps unsaved form values. Dates, numbers and Material UI controls follow the selected language.
+Click **RU** or **EN** in the header or on the sign-in page. The browser remembers this choice; switching languages keeps unsaved form values. Dates, numbers and Material UI controls follow the selected language.
 
 The Telegram bot has an independent setting: **System settings → Notifications → Telegram bot language** (in Russian: **Системные настройки → Уведомления → Язык Telegram-бота**). Save notifications to apply it to subsequent bot replies, alerts and backup messages without restarting the service. Existing installations default to English. Command names such as `/status`, receiver commands, identifiers and raw technical logs remain unchanged.
 

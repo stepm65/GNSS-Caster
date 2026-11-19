@@ -1,5 +1,12 @@
 import { t, getLanguage, subscribeLanguage } from "./i18n";
 import { LanguagePicker } from "./LanguagePicker";
+import { FontPicker } from "./FontPicker";
+import {
+  fontStack,
+  getFonts,
+  loadSelectedFonts,
+  subscribeFonts,
+} from "./fonts";
 import { ruRU, enUS } from "@mui/material/locale";
 import React, {
   useState,
@@ -136,8 +143,10 @@ class ErrorBoundary extends React.Component {
     );
   }
 }
+loadSelectedFonts();
 function App() {
   const language = useSyncExternalStore(subscribeLanguage, getLanguage);
+  const fonts = useSyncExternalStore(subscribeFonts, getFonts);
   const [mode, setMode] = useState(() => {
     try {
       return localStorage.getItem("gnss_theme") === "dark" ? "dark" : "light";
@@ -169,7 +178,8 @@ function App() {
             },
           },
           typography: {
-            fontFamily: 'Inter, "Segoe UI", sans-serif',
+            fontFamily: fontStack("ui", fonts.ui),
+            fontFamilyMono: fontStack("mono", fonts.mono),
             h3: {
               fontWeight: 650,
               fontSize: "2.25rem",
@@ -197,6 +207,14 @@ function App() {
             borderRadius: 12,
           },
           components: {
+            MuiCssBaseline: {
+              styleOverrides: {
+                "pre, code, kbd, samp, .gnss-mono": {
+                  fontFamily: fontStack("mono", fonts.mono),
+                  fontVariantLigatures: "none",
+                },
+              },
+            },
             MuiButton: {
               defaultProps: {
                 disableElevation: true,
@@ -253,7 +271,7 @@ function App() {
         },
         language === "ru" ? ruRU : enUS,
       ),
-    [mode, language],
+    [mode, language, fonts],
   );
   const toggle = () =>
     setMode((old) => {
@@ -498,6 +516,7 @@ function App() {
                       <LightModeOutlined fontSize="small" />
                     )}
                   </IconButton>
+                  <FontPicker />
                   <LanguagePicker />
                   <Divider
                     orientation="vertical"

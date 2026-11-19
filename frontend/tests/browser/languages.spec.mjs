@@ -86,9 +86,11 @@ for (const [path, title] of pages)
       page.getByRole("heading", { name: title, exact: true }),
     ).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+    const languages = page.getByRole("group", { name: "Язык интерфейса" });
+    await expect(languages).toBeVisible();
     await expect(
-      page.getByRole("combobox", { name: "Язык интерфейса" }),
-    ).toBeVisible();
+      languages.getByRole("button", { name: "Русский" }),
+    ).toHaveAttribute("aria-pressed", "true");
     expect(errors).toEqual([]);
   });
 
@@ -97,8 +99,10 @@ test("changing interface language preserves a draft and persists across navigati
 }) => {
   await page.goto("/system_configuration");
   await page.getByLabel("System Name").fill("My test caster");
-  await page.getByRole("combobox", { name: "Interface language" }).click();
-  await page.getByRole("option", { name: "Русский", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Interface language" })
+    .getByRole("button", { name: "Русский" })
+    .click();
   await expect(page.getByLabel("Имя системы")).toHaveValue("My test caster");
   // Save is explicit; reset the draft before navigating away.
   await page.getByLabel("Имя системы").fill("GNSS Caster");
@@ -111,8 +115,10 @@ test("changing interface language preserves a draft and persists across navigati
   await expect(
     page.getByRole("heading", { name: "Резервные копии и восстановление" }),
   ).toBeVisible();
-  await page.getByRole("combobox", { name: "Язык интерфейса" }).click();
-  await page.getByRole("option", { name: "English", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Язык интерфейса" })
+    .getByRole("button", { name: "English" })
+    .click();
   await expect(
     page.getByRole("heading", { name: "Backups & restore" }),
   ).toBeVisible();

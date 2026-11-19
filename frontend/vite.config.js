@@ -10,6 +10,8 @@ export default defineConfig({
       input: "src/main.jsx",
       output: {
         manualChunks(id) {
+          // Each font family stays in its own lazily loaded chunk.
+          if (id.includes("@fontsource-variable")) return undefined;
           if (id.includes("node_modules"))
             return /node_modules\/(react|react-dom|scheduler)\//.test(
               id.replaceAll("\\", "/"),
